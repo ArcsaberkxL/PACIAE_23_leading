@@ -19,6 +19,7 @@ to take care of the nuclear medium effects.
 ## Usage
 
 ```
+To simulate pp, pA and AA collisions.
 ```
 
 ## Contributing
