@@ -5,7 +5,13 @@
 
 # The parton and hadron cascade model PACIAE
 
-This is an example file with default selections.
+PACIAE model is a The PACIAE model is a multipurpose 
+Monte Carlo event generator developed to describe 
+a wide range of collisions, including hadron-hadron interactions, 
+hadron interactions off nuclei, and nucleus-nucleus 
+collisions. It is built based on PYTHIA-6.4 and incorporates 
+parton and hadron rescattering stages to take care of 
+the nuclear medium effects.
 
 ## Install
 
