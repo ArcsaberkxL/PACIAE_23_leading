@@ -20,6 +20,8 @@ to take care of the nuclear medium effects.
 
 ```
 To simulate pp, pA and AA collisions.
+The PACIAE.sh script will compile and run program automatically.
+Use command "time ./PACIAE.sh".
 ```
 
 ## Contributing
