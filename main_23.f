@@ -79,8 +79,6 @@ c        letter. typing ": set ic + enter key" before searching.
 	common/aaff/naff,nonff,kaff(kszj,5),paff(kszj,5),vaff(kszj,5) ! 010518
 	common/sbh/nbh,nonbh,kbh(kszj,5),pbh(kszj,5),vbh(kszj,5)   ! 050603
         common/sa1_h/nn,non1_h,kn(kszj,5),pn(kszj,5),rn(kszj,5)   ! 050603
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
 	common/show/vip(mplis),xap(mplis)
         common/wz/c17(500,3),ishp(kszj),tp(500),coor(3),p17(500,4)
         common/papr/t0,sig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
@@ -122,11 +120,9 @@ c        calculating parton-parton differential cross section in parcas_23.f
 c	4: parameter idw, # of integration intervals in parcas_23.
 c	5: =0, w/o nuclear shadowing, 
 c      =1, Wang's nuclear shadowing (PLB 527(2002)85).
-c	6: parameter 'a', i.e. parj(41) in Lund string fragmentation function
-c	   if adj1(12)=0
-c	   parameter 'a' in Field-Feynman string fragmentation function 
-c           if adj1(12)=1
-c       7: parameter 'b', i.e. parj(42) in Lund string fragmentation function
+c	6: parameter 'a', i.e. parj(41), in Lund and/or Field-Feynman 
+c        string fragmentation function
+c	7: parameter 'b', i.e. parj(42), in Lund string fragmentation function
 c       8: i.e. mstp(82) in PYTHIA64
 c       9: i.e. parp(81) (D=1.9 GeV/c), effective minimum transverse momentum  
 c	   of multiple interactions if mstp(82)=1                      
@@ -155,14 +151,17 @@ c          =1: CME on
 c       24: =tl0,the virtuality cut in time-like radiation in parcas_23.f, 
 c            4*tl0 is assumed
 c	25: \Lambda_QCD in parcas_23.f
-c	26: selection of random number seed,                             !Lei20221017
-c       =0, default PYTHIA seed (19780503), can be used for debug.   !Lei20221017
-c       =other, seed from the real-time colock                       !Lei20221017
+c	26: selection of random number seed,                           !Lei20221017
+c       =0, default PYTHIA seed (19780503), can be used for debug. !Lei20221017
+c       =other, seed from the real-time colock                     !Lei20221017
 c       27: largest momentum allowed for particle ('dpmax')
 c       28: largest position allowed for particle (drmax=para10*max(rnt,rnp),  
 c           which is 1 in usu.dat and is recalculated in the running)  
-c	29: free
-c	30: free
+c081222 29: sumpling daughter energy fraction z taking from mother in 'funcz'  
+c          =0: by Lund string fragmentation function
+c          =1: by Field-Feynmman fragmentation function
+c	30: =0, without more requirements   !Lei20221211
+c       =1, distributes the participant nucleons in overlapping areas forcely
 c	31: parj(1) in pythia64
 c	32: parj(2) in pythia64
 c	33: parj(3) in pythia64
@@ -1417,40 +1416,6 @@ c	partonic rescattering
 c140718	if(itden.ne.1)goto 890   ! for e+e-,p+p,pbar_p, or p+pbar 080806 
 c	write(9,*)'before parcas iii=',iii   ! sa
 
-c	'pyjets' to 'parlist'
-        iprl=n
-        do i=1,n
-        idp(i)=k(i,2)
-        rp(4,i)=0.
-c       parton cascade process is assumed to start at time 0.
-        eee=p(i,4)
-        pp(4,i)=eee
-        if(eee.lt.1.e-12)eee=1.e-12   ! 180420
-        do j=1,3
-        rp(j,i)=v(i,j)
-        ppp=p(i,j)
-        pp(j,i)=ppp
-        vp(j,i)=ppp/eee
-        enddo
-        rmp(i)=p(i,5)
-        taup(i)=0.
-        vip(i)=0.
-        xap(i)=0.
-        enddo
-        do i=n+1,mplis
-        do j=1,3
-        rp(j,i)=0.
-        pp(j,i)=0.
-        vp(j,i)=0.
-        enddo
-        rp(4,i)=0.
-        pp(4,i)=0.
-        taup(i)=0.
-        vip(i)=0.
-        xap(i)=0.
-        idp(i)=0
-        rmp(i)=0.
-        enddo
 c201203
 c	goto 890
         time_par=0.d0   ! 081010
@@ -2402,21 +2367,18 @@ c       write(22,*)'be. 80004 iii,nbe=',iii,nbe   ! bh
 
 	if((ipden.eq.0 .and. itden.eq.0) .or. (ipden.eq.2 .and.   ! 180921 yan
      c   itden.eq.2) .or. ipden.ge.11)goto 80004   ! 280718, 180921 yan
+c       'goto 80004': not fragments rest partons
 c291218        
 	if(adj140.ne.4)goto 80004   
         if(adj140.eq.4)then
-c271022                
-        if(adj12.eq.1)goto 80004   ! coalescencs
-c       here if you want to hadronize rest parton from inelastic
-c        parton-parton collision ('trs') etc. you have first to output 
-c        the 'ithroq' etc. counted in coales.f
-c271022        
+                
+c251122 if(adj12.eq.1)goto 80004   ! for case of coalescence hadronization
+   
         if(((ipden.eq.0 .and. itden.eq.1) .or. 
      c   (ipden.eq.1 .and. itden.eq.0)) .and. nbe.le.3)goto 80004   ! pA or Ap
 c       if(ipden.eq.1 .and. itden.eq.1)goto 80004 ! AB
-        if((ipden.eq.1 .and. itden.eq.1) .and. nbe.le.18)goto 80004 ! AB
+        if((ipden.eq.1 .and. itden.eq.1) .and. nbe.le.6)goto 80004 ! AB 251122
         endif
-c       'goto 80004': not fragments rest partons
 c291218
 c       write(22,*)'be. hadro. rest partons,iii,nbe,naff=',iii,nbe,naff   ! bh
 c       call prt_aaff(naff,cc)

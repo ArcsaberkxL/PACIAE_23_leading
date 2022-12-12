@@ -55,7 +55,7 @@
 1,7,0,2,3,2              ! mstu21,mstj1_1,mstj1_2,mstj2,mstj3,itorw
 1.,0.47,0.4000,1000,0,0.30,0.58,4,1.9,1.0         ! adj1(1)- adj1(10)  
 0.10,0,26,18,1.000,1,80.,0,0.03,1               ! adj1(11)- adj1(20) 
-0,4.1,1,0.15,0.4,0,800000.,1.0,0.26,5.0      ! adj1(21)- adj1(30) 
+0,4.1,1,0.15,0.4,0,800000.,1.0,0,0      ! adj1(21)- adj1(30) 
 0.1,0.3,0.40,0.36,1.0,0.0,100.0,3.0,2.00,4.0    ! adj1(31)- adj1(40) 
 4,2,2,0.000,0                       ! kjp22,kjp23,kjp24,parp78,mstptj 
 0.,0,0.1,0.05,1.,0.2,0.05      ! parecc,iparres,smadel,dparj4,cp0,cr0,seco
@@ -257,8 +257,10 @@ adj1(i), i=1,40: switches and/or parameters
           =other, seed from the real-time colock
       27: largest momentum allowed for produced particle
       28: concerned to the largest position allowed for produced particle
-      29: free
-      30: free
+      29: =1，Field-Feymman fragmentation function is used in coalescence model 
+          =0，Lund string fragmentation function is used in coalescence model
+      30: =0, without more requirements
+          =1, distributes the participant nucleons in overlapping region forcely
       31: parj(1) in PYTHIA 
       32: parj(2) in PYTHIA 
       33: parj(3) in PYTHIA 

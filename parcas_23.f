@@ -1,56 +1,41 @@
 	subroutine parcas(time_par,jjj,iijk,win,nap,rnt,rnp) 
 c       deals with parton cascade (partonic rescattering)
-c	input messages are in 'parlist' ('pyjets' to 'parlist' in main.f)
-c	working block is 'parlist'
-c180520	output messages are in 'parlist' (in 'pyjets' either)  
-c	writen by Ben-Hao Sa 19/11/2002 
+c	writen by Ben-Hao Sa at 19/11/2002 
+c	input messages are in 'pyjets'   ! 051122 
+c	working block is 'pyjets'   ! 051122
+c       output messages are in 'pyjets'   ! 051122
 c160110 iiii: number of run
 c       jjj: jjj-th loop interaction in a event   ! 180520
-	parameter (mplis=80000,msca=20000)
-c181018	parameter(kszj=80000)   ! 160110
+	parameter (kszj=80000,msca=20000,mclis=280000)   ! 051122
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-c181018	COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 160110
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
 	COMMON/PYDAT1/MSTU(200),PARU(200),MSTJ(200),PARJ(200)  ! 240503
 	common/sa1/kjp21,non1,bp,iiii,neve,nout,nosc
 	common/sa12/ppsa(5),nchan,nsjp,sjp,ttaup,taujp   ! 120505
+        common/sa24/adj1(40),nnstop,non24,zstop
         common/sa33/smadel,ecce,secce,parecc,iparres   ! 080520
-      common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
-c       iprl: current total number of partons in parton list
-c       rp  : space and time coordinates of particle
-c       pp  : momentum of particle
-c       tp  : current time of particle
-c       taup: formation time of particle
-c       idp : flavor of particle
-c       rmp : rest mass of particle
-c       ep  : total energy of particle
-c       vp  : velocity of particle
-
-	parameter (mclis=280000)
 	common/collist/lc(2,mclis),tc(2,mclis),icol
-
-c       icol : current total number of collision pairs in collision time list
-c       lc   : line number (in [1,iprl]) of colliding pair, eg.
-c	 lc(1,100): line number of first particle of 100-th colliding pair
-c       tc   : the collision time of colliding pair
-
-	common/scatt/pi(4),pj(4),ic,jc,iprl0
-c       ic,jc: line number of colliding particles
-c       iprl0: the iprl before current collision
-c	pi,pj: four momentum of colliding particles 
+	common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
 	common/work7/reac(9),crose(9)
-      common/papr_p/core,xs,xu,xxt,sm,as,dta,xa,sl0,tl0,qa,
+        common/papr_p/core,xs,xu,xxt,sm,as,dta,xa,sl0,tl0,qa,
      c  ea,sqq,sqg,sgg,pa(3),pip(6,msca),mtime,kfk,nsca,kpip(msca)
-      common/sa24/adj1(40),nnstop,non24,zstop
 	common/sa6_p/ithroq_p,ithrob_p,ich_p,non6_p,throe_p(4)   ! 201104
+c       icol : current total number of collision pairs in collision time list
+c       lc   : line number (in [1,n]) of colliding pair, eg.
+c	lc(1,100): line number of first particle of 100-th colliding pair
+c       tc   : the collision time of colliding pair
+c       ic,jc: line number of colliding particles
+c       n0: the n before current collision
+c	pi,pj: four momentum of colliding particles 
 c       ithroq_p : total # of quarks thrown away
 c       ithrob_p : total # of antiquarks thrown away
 c       throe_p : total momentum and energy of the partons thrown away
 c       ichh_p : total charge of the partons thrown away
-	dimension b(3),ppr(mplis,5),peo(5),bpp(20)
-	dimension rpo(4,mplis),ppo(4,mplis)   ! 120603 120505
+        dimension rpo(kszj,4),ppo(kszj,4)    ! 051122
+c051122 rpo,ppo: parton four coordinate before Neuton motion, four momentum 
+c051122  before energy loss        
 c151203	iijk=0   ! 120603
 	tl0=adj1(24)
 c       tl0: cut off virtuality of time-like branching, i. e. Mu0**2
@@ -71,9 +56,8 @@ c201104
         do i=1,4
         throe_p(i)=0.
         enddo
-	do i1=1,iprl
-	rp(4,i1)=0.
-	taup(i1)=0.
+	do i1=1,n   ! 051122
+	v(i1,4)=0.
 	enddo
 c241104
 c	step 1
@@ -100,7 +84,7 @@ c---------------------------------------------------------------------
 	iijk=1
 	return
 	endif
-	iprl0=iprl
+	n0=n   ! 051122
 
 c	step 2
 c       find out the binary collision (icp) with the minimum colli. time
@@ -125,21 +109,15 @@ c080520 parton rescattering is assumed no longer than 10000 fm/c
 	time=tcp
 
 c	step 3
-c	perform classical Newton motion for ic & jc partons
-c120603	do j=1,3
-c120603	rp(j,ic)=rp(j,ic)+vp(j,ic)*(tc(1,icp)-rp(4,ic))
-c120603	rp(j,jc)=rp(j,jc)+vp(j,jc)*(tc(2,icp)-rp(4,jc))
-c120603	enddo
-c120603	rp(4,ic)=tc(1,icp)
-c120603	rp(4,jc)=tc(2,icp)
-c       perform classical Newton motion
-	do i=1,iprl
+c       perform classical Neuton motion for ic & jc partons
+	do i=1,n   ! 051122
 	do j=1,3
-	rpo(j,i)=rp(j,i)
-	rp(j,i)=rp(j,i)+vp(j,i)*(tcp-rp(4,i))
+        rpo(i,j)=v(i,j)
+        vpij=p(i,j)/p(i,4)
+	v(i,j)=v(i,j)+vpij*(tcp-v(i,4))
 	enddo
-	rpo(4,i)=rp(4,i)
-	rp(4,i)=tcp
+        rpo(i,4)=v(i,4)
+	v(i,4)=tcp
 	enddo
 c120603
 c	consider parton energy loss phenomenologically
@@ -158,7 +136,7 @@ c	write(9,*)'nap,rnt,rnp,dell=',nap,rnt,rnp,dell   ! sa
 c120505
 c	step 4
 c       performs parton-parton collision & updates particle list 
-c       if lmn=4,6,& 7 updates 'parlist','pyjets','sbe',diquark list,string 
+c       if lmn=4,6,& 7 updates,'pyjets','sbe',diquark list,string 
 c        list, & lc(1-2,m) either 
 	kkk=0   ! 120603
 	iway=0   ! 120505
@@ -204,94 +182,7 @@ c250803
 	reaci=reac(i)
 	if(reaci.gt.0.)crose(i)=crose(i)/reaci
 	enddo
-
-        goto 302   ! 3241122
-
 c250803
-c	throw away parton if its modular of three momentum > dpmax or energy 
-c	 > dpmax or modular of spatial coordinate > drmax
-	i11=1   
-201	do 301 i1=i11,iprl   ! 1 
-	ppp1=pp(1,i1)
-	ppp2=pp(2,i1)
-	ppp3=pp(3,i1)
-	ppp4=pp(4,i1)
-	rrr1=rp(1,i1)
-	rrr2=rp(2,i1)
-	rrr3=rp(3,i1)
-	pppm=ppp1*ppp1+ppp2*ppp2+ppp3*ppp3
-	if(pppm.gt.1.e20)pppm=1.e20
-	if(pppm.lt.1.e-20)pppm=1.e-20
-	pppm=dsqrt(pppm)
-	rrrm=rrr1*rrr1+rrr2*rrr2+rrr3*rrr3
-	if(rrrm.gt.1.e20)rrrm=1.e20
-        if(rrrm.lt.1.e-20)rrrm=1.e-20
-	rrrm=dsqrt(rrrm)
-	if(pppm.le.dpmax.and.ppp4.le.dpmax.and.rrrm.le.drmax)goto 301
-	if(adj112.ne.0.)then   !
-	kf=idp(i1)
-	if(kf.gt.0.or.kf.eq.21)ithroq_p=ithroq_p+1
-	if(kf.lt.0)ithrob_p=ithrob_p+1
-	if(kf.ne.21)ich_p=ich_p+pychge(kf)
-	do k1=1,4
-	throe_p(k1)=throe_p(k1)+pp(k1,i1)
-	enddo
-	if(i1.eq.iprl)then
-	iprl=iprl-1
-	goto 501
-	endif
-	do k1=i1+1,iprl
-	do k2=1,3
-	rp(k2,k1-1)=rp(k2,k1)
-	pp(k2,k1-1)=pp(k2,k1)
-	vp(k2,k1-1)=vp(k2,k1)
-	enddo
-	rp(4,k1-1)=rp(4,k1)
-	pp(4,k1-1)=pp(4,k1)
-	idp(k1-1)=idp(k1)
-	taup(k1-1)=taup(k1)
-	rmp(k1-1)=rmp(k1)
-	enddo
-	iprl=iprl-1
-	if(iprl.eq.0)return
-	i11=i1
-	goto 201   ! 140705
-	endif   !
-	if(adj112.eq.0.)then   !!
-c	in case of string fragmentation should not throw away that parton
-        if(pppm.gt.dpmax.and.ppp4.gt.dpmax)then   ! 311007
-	cita=2*pyr(1)-1.
-        fi=2.*3.1416*pyr(1)
-        sita=dsqrt(1.-cita**2)
-	pp1i=dpmax*sita*dcos(fi)
-	pp2i=dpmax*sita*dsin(fi)
-	pp3i=dpmax*cita
-        pp(1,i1)=pp1i
-        pp(2,i1)=pp2i
-        pp(3,i1)=pp3i
-	pp4i=rmp(i1)*rmp(i1)+pp1i*pp1i+pp2i*pp2i+pp3i*pp3i
-	if(pp4i.gt.1.e20)pp4i=1.e20
-	if(pp4i.lt.1.e-20)pp4i=1.e-20
-	pp(4,i1)=dsqrt(pp4i)
-        endif   ! 311007
-        if(rrrm.gt.drmax)then   ! 311007
-	cita=2*pyr(1)-1.
-        fi=2.*3.1416*pyr(1)
-        sita=dsqrt(1.-cita**2)
-	rp(1,i1)=drmax*sita*dcos(fi)
-	rp(2,i1)=drmax*sita*dsin(fi)
-	rp(3,i1)=drmax**cita  
-        endif   ! 311007
-	goto 301   ! 050605
-	endif   !!
-c140705	goto 201
-301	enddo   ! 1
-501	if(ithroq_p.ne.0.or.ithrob_p.ne.0)then
-c140705	write(9,*)'iiii,ithroq_p,ithrob_p=',iiii,ithroq_p,ithrob_p   ! sa
-c140705	write(9,*)'throe_p=',throe_p   ! sa
-	endif
-c140705
-302     continue   ! 241122
 	return
 	end
 
@@ -300,14 +191,12 @@ c140705
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine reset_eve
 c       initiate the collision time list
-	parameter (mplis=80000,mclis=280000)
+	parameter (mclis=280000)
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
 	common/collist/lc(2,mclis),tc(2,mclis),icol
-	common/scatt/pi(4),pj(4),ic,jc,iprl0
+	common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
 	common/work7/reac(9),crose(9)
 c       reac and crose: the arraies to account for the number and
 c        the value of cross section for 2->2 partonic processes
@@ -332,13 +221,12 @@ c        the value of cross section for 2->2 partonic processes
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine ctlcre_par(iijk)      
 c       create the initial collision list 
-	parameter (mplis=80000,mclis=280000)
+	parameter (kszj=80000,mclis=280000)   ! 051122
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
         common/sa24/adj1(40),nnstop,non24,zstop   ! 210803 181003 161104
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         common/papr/t0,sig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
      c  ,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
 	common/collist/lc(2,mclis),tc(2,mclis),icol
@@ -348,25 +236,25 @@ c       create the initial collision list
 c	every process (eg. parton casecade) starts from time equal to 0
 	dminf=100.   ! 111599
 	ijk=0   ! 010601
-	do 100 i=2,iprl   ! upper diagonal 151203   
-c	iprl00: total # of partons in projectile nucleus
+	do 100 i=2,n   ! upper diagonal 151203 051122   
+c	n00: total # of partons in projectile nucleus
 c080603
-	kfi=iabs(idp(i))
-c111122 if(kfi.gt.3 .and. kfi.ne.21)goto 100   ! 120620
+	kfi=iabs(k(i,2))
+c051122 if(kfi.gt.3 .and. kfi.ne.21)goto 100   ! 120620
 c       consider d,u,s, their antiquarks, and gluon only   ! 120620
-        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 111122
+        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 051122
 c       consider d,u,s,c,b,t, their antiquarks, and gluon only   ! 080520
 c080603
 	do 200 j=1,i-1   ! upper diagonal 151203 
 c080603
-        kfj=iabs(idp(j))
-c111122 if(kfj.gt.3 .and. kfj.ne.21)goto 100   ! 120620
+        kfj=iabs(k(j,2))
+c051122 if(kfj.gt.3 .and. kfj.ne.21)goto 100   ! 120620
 c       consider d,u,s, their antiquarks, and gluon only   ! 120620
-        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 111122
+        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 051122
 c       consider d,u,s,c,b,t, their antiquarks, and gluon only   ! 080520
 c080603
 	if(icol.gt.mclis) then
-	write(9,*)'icol over limit iprl,icol=',iprl,icol   ! sa
+	write(9,*)'icol over limit n,icol=',n,icol   ! sa
 	stop 7777
 	endif
 	tc(1,icol)=0.0
@@ -438,7 +326,7 @@ c       find out the binary collision (icp) with minimum colli. time (tcp)
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-	common/scatt/pi(4),pj(4),ic,jc,iprl0
+	common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
 	common/collist/lc(2,mclis),tc(2,mclis),icol
 c	write(9,*)'in find, icol=',icol ! sa
 c        do i1=1,icol   ! sa
@@ -475,19 +363,18 @@ c020512  parton-parton scattering
 c       ik1,ik2: line number of the colliding pair in parton list
 c       kf3 and kf4: kf code of the collided pair 
 c230520 if iway=1 the collision does not happen
-	parameter (mplis=80000,mclis=280000)
+	parameter (kszj=80000,mclis=280000)   ! 051122
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
         common/sa24/adj1(40),nnstop,non24,zstop   ! 210803 181003 161104
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         common/papr/t0,siig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
      c  ,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
-	common/scatt/pi(4),pj(4),ic,jc,iprl0
+	common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
 	common/collist/lc(2,mclis),tc(2,mclis),icol
 c-----------------------------------------------------------------------
-c	write(9,*)'in upda ic,jc,iprl,icol=',ic,jc,iprl,icol   ! sa
+c	write(9,*)'in upda ic,jc,n,icol=',ic,jc,n,icol   ! sa
 	dddt=adj1(19)   ! 161104
 	j=0
 c       loop over old colliding pairs
@@ -523,20 +410,20 @@ c-----------------------------------------------------------------
 c       loop over ic,jc (new) and old partons (i.e. construct colli. pair 
 c       by partons, one of which is ic or jc and another one is in parton list) 
 370	icol=j+1
-	do 100 i=1,iprl0
+	do 100 i=1,n0   ! 051122
 	i1=i
 	if(i1.eq.ic) goto 100
 	if(i1.eq.jc) goto 100
 c080603
-	kfi=iabs(idp(i))
-c111122 if(kfi.gt.3 .and. kfi.ne.21)goto 100   ! 120620
+	kfi=iabs(k(i,2))   ! 051122
+c051122 if(kfi.gt.3 .and. kfi.ne.21)goto 100   ! 120620
 c       consider d,u,s, their antiquarks, and gluon only   ! 120620
-        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 111122 
+        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 051122
 c       consider d,u,s,c,b,t, their antiquarks, and gluon only   ! 080520
 c080603
-	do 200 k=1,2
-	if(k.eq.1)j1=ic
-	if(k.eq.2)j1=jc
+	do 200 k1=1,2
+	if(k1.eq.1)j1=ic
+	if(k1.eq.2)j1=jc
 	tc(1,icol)=0.0
 	tc(2,icol)=0.0
 c	write(9,*)'be. call tcolij i1,j1=',i1,j1   ! sa
@@ -572,9 +459,9 @@ c141104	if(tcicol.gt.0.0) icol=icol+1
 	tc(1,i)=0.
 	tc(2,i)=0.
 	enddo
-	iprl0=iprl
+	n0=n   ! 051122
 c020603
-c260620 write(9,*)'af. update_ctl iprl0,icol,ic,jc=',iprl0,icol,ic,jc   ! sa
+c260620 write(9,*)'af. update_ctl n0,icol,ic,jc=',n0,icol,ic,jc   ! sa
 c	do i1=1,icol   ! sa
 c	write(9,*)lc(1,i1),lc(2,i1),tc(1,i1),tc(2,i1)   ! sa
 c	enddo   ! sa
@@ -588,19 +475,17 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine update_ctlm(time,iway)   ! 120505 160110
 c       a part of updating collision time list (throw away old collission 
 c        pairs only) for inela. parton-parton scattering 7  ! 230520
-	parameter (mplis=80000,mclis=280000)
+	parameter (mclis=280000)   
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
         common/sa24/adj1(40),nnstop,non24,zstop   ! 210803 181003 161104
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         common/papr/t0,siig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
      c  ,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
-	common/scatt/pi(4),pj(4),ic,jc,iprl0
+	common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
 	common/collist/lc(2,mclis),tc(2,mclis),icol
 c-----------------------------------------------------------------------
-c	write(9,*)'get in upda ic,jc,iprl,icol=',ic,jc,iprl,icol   ! sa
+c       write(9,*)'get in upda ic,jc,n,icol=',ic,jc,n,icol   ! sa        
 	dddt=adj1(19)   ! 161104
 	j=0
 c       loop over old colliding pairs
@@ -638,32 +523,31 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine update_ctln(time,iway)   ! 120505 160110 
 c       update the collision time list (a part) for inela. parton-parton 
 c        scattering 7
-	parameter (mplis=80000,mclis=280000)
+	parameter (kszj=80000,mclis=280000)   ! 051122
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
         common/sa24/adj1(40),nnstop,non24,zstop   ! 210803 181003 161104
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         common/papr/t0,siig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
      c  ,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
-	common/scatt/pi(4),pj(4),ic,jc,iprl0
+	common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
 	common/collist/lc(2,mclis),tc(2,mclis),icol
 c-----------------------------------------------------------------------
         dddt=adj1(19)   ! 161104
-c       loop over ic (jc) and old 'parlist' (i.e. construct colli. pair 
+c       loop over ic (jc) and old 'pyjets' (i.e. construct colli. pair 
 c        composed of partons one of which is ic (jc) and another one 
-c        in old 'parlist')
+c        in old 'pyjets')
         icol=icol+1
-	do 100 i=1,iprl0   ! 
+	do 100 i=1,n0   ! 051122
 	i1=i
 	if(i1.eq.ic) goto 100
 	if(i1.eq.jc) goto 100
 c080603
-	kfi=iabs(idp(i))
-c111122 if(kfi.gt.3 .and. kfi.ne.21)goto 100   ! 120620
+	kfi=iabs(k(i,2))
+c051122 if(kfi.gt.3 .and. kfi.ne.21)goto 100   ! 120620
 c       consider d,u,s, their antiquarks, and gluon only   ! 120620
-        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 111122
+        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 051122
 c       consider d,u,s,c,b,t, their antiquarks, and gluon only   ! 080520
 c080603
 	do 200 k1=1,2
@@ -704,10 +588,10 @@ c141104	if(tcicol.gt.0.0) icol=icol+1
 	tc(1,i)=0.
 	tc(2,i)=0.
 	enddo
-	iprl0=iprl
+	n0=n   ! 051122
 c020603
-c	write(9,*)'in update_ctl af. loop iprl0,icol,ic,jc=',
-c     c	 iprl0,icol,ic,jc   ! sa
+c	write(9,*)'in update_ctl af. loop n0,icol,ic,jc=',
+c     c	 n0,icol,ic,jc   ! sa
 c	do i1=1,icol   ! sa
 c	write(9,*)lc(1,i1),lc(2,i1),tc(1,i1),tc(2,i1)   ! sa
 c	enddo   ! sa
@@ -721,37 +605,35 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine coij_p(i,j,time,icp,dminf,iff,jf,kji)
 c       calculate the collision time for construction
 c	 of initial collision time list
-	parameter (mplis=80000,mclis=280000)
+	parameter (kszj=80000,mclis=280000)   ! 051122
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
         common/syspar_p/rsig1,pio,tcut
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
 	common/collist/lc(2,mclis),tc(2,mclis),icol
-	common/scatt/pi(4),pj(4),ic,jc,iprl0
+	common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
 	dimension px(4),py(4),pij(4)
 	dimension dr(3),db(3),vi(3),vj(3),pic(4),pjc(4),pxc(4),pyc(4)
 	double precision b(3)
-c	write(9,*)i,j,idp(i),idp(j)   ! sa
 	pio=3.1416
-	pi(4)=pp(4,i)
-	pj(4)=pp(4,j)
+	pi(4)=p(i,4)
+	pj(4)=p(j,4)
 	if(pi(4).lt.1.e-10)pi(4)=1.e-10   ! 031204
 	if(pj(4).lt.1.e-10)pj(4)=1.e-10   ! 031204
 	pij(4)=pi(4)+pj(4)
 	pic(4)=pi(4)
         pjc(4)=pj(4)
 	do k1=1,3
-	pi(k1)=pp(k1,i)
-	pj(k1)=pp(k1,j)
+	pi(k1)=p(i,k1)
+	pj(k1)=p(j,k1)
 	pij(k1)=pi(k1)+pj(k1)
 	pic(k1)=pi(k1)
         pjc(k1)=pj(k1)
 	b(k1)=(pi(k1)+pj(k1))/pij(4)
 	enddo
-	rmi=rmp(i)
-	rmj=rmp(j)
+	rmi=p(i,5)
+	rmj=p(j,5)
 	eiej2=dot(pij,pij)
 c230520 invariant mass
 c	insert! energy cut
@@ -760,21 +642,21 @@ c	write(9,*)'pi=',pi
 c	write(9,*)'pj=',pj    
 c	write(9,*)'pij=',pij    
 c	write(9,*)'rmi,rmj=',rmi,rmj   
-c	write(9,*)i,j,idp(i),idp(j)
+c	write(9,*)i,j,k(i,2),k(j,2)
 c240503   
 	kji=1   ! stop 2222
 	return
 c240503    
 	endif
 	do n1=1,4
-	px(n1)=rp(n1,i)
-	py(n1)=rp(n1,j)
+	px(n1)=v(i,n1)
+	py(n1)=v(j,n1)
 	pxc(n1)=px(n1)
         pyc(n1)=py(n1)
 	enddo
 	ilo=0
-	kf1=idp(i)
-	kf2=idp(j)
+	kf1=k(i,2)
+	kf2=k(j,2)
 c160110
         ikf1=iabs(kf1)
         ikf2=iabs(kf2)
@@ -806,16 +688,16 @@ c	endif   ! sa
         bb=0.
         rr=0.
         rtai=0.
-	do k=1,3
-        vi(k)=pic(k)/pic(4)
-        vj(k)=pjc(k)/pjc(4)
+	do k1=1,3   ! 051122
+        vi(k1)=pic(k1)/pic(4)
+        vj(k1)=pjc(k1)/pjc(4)
         enddo
-        do k=1,3
-        dr(k)=pxc(k)-pyc(k)-(vi(k)*pxc(4)-vj(k)*pyc(4))
-        db(k)=vi(k)-vj(k)
-        rb=rb+dr(k)*db(k)
-        bb=db(k)**2+bb
-        rr=rr+dr(k)*dr(k)
+        do k1=1,3
+        dr(k1)=pxc(k1)-pyc(k1)-(vi(k1)*pxc(4)-vj(k1)*pyc(4))
+        db(k1)=vi(k1)-vj(k1)
+        rb=rb+dr(k1)*db(k1)
+        bb=db(k1)**2+bb
+        rr=rr+dr(k1)*dr(k1)
         enddo
 c	if(i.eq.3 .and. j.eq.9)then   ! sa
 c	write(9,*)'vi,vj,bb='   ! sa
@@ -866,42 +748,47 @@ c	write(9,*)'in coij,iff,jf=',iff,jf   ! sa
 
 
 
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine tcolij_par(i,j,time,icp)
 c       calculate the collision time of i and j
-	parameter (mplis=80000,mclis=280000)
+	parameter (kszj=80000,mclis=280000)   ! 051122
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
         common/syspar_p/rsig1,pio,tcut
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
 	common/collist/lc(2,mclis),tc(2,mclis),icol
-	common/scatt/pi(4),pj(4),ic,jc,iprl0
+	common/scatt/pi(4),pj(4),ic,jc,n0
 	dimension px(4),py(4),dx(4),pij(4),pic(4),pjc(4),
      c	 pxc(4),pyc(4)
 	dimension dr(3),db(3),vi(3),vj(3),rfi(4),rfj(4)
 	double precision b(3)
-	pi(4)=pp(4,i)
-	pj(4)=pp(4,j)
+        dimension taup(kszj)   ! 051122
+c051122
+        do i1=1,kszj
+        taup(i1)=0.
+        enddo
+c051122        
+	pi(4)=p(i,4)
+	pj(4)=p(j,4)
 	if(pi(4).lt.1.e-10)pi(4)=1.e-10   ! 031204
 	if(pj(4).lt.1.e-10)pj(4)=1.e-10   ! 031204
 	pij(4)=pi(4)+pj(4)
 	pic(4)=pi(4)   
         pjc(4)=pj(4)   
 	do k1=1,3
-	pi(k1)=pp(k1,i)
-	pj(k1)=pp(k1,j)
+	pi(k1)=p(i,k1)
+	pj(k1)=p(j,k1)
 	pij(k1)=pi(k1)+pj(k1)
 	pic(k1)=pi(k1)   
         pjc(k1)=pj(k1)   
         b(k1)=(pi(k1)+pj(k1))/(pi(4)+pj(4))   
 	enddo
-c	write(9,*)'in tcolij, i,j,idp(i),idp(j)=',i,j,idp(i),idp(j) ! sa
+c	write(9,*)'in tcolij, i,j,ki,kj=',i,j,k(i,2),k(j,2) ! sa
 c	write(9,*)'pi=',(pi(i1),i1=1,3)   ! sa
 c	write(9,*)'pj=',(pj(i1),i1=1,3)   ! sa
-	rmi=rmp(i)
-	rmj=rmp(j)
+	rmi=p(i,5)
+	rmj=p(j,5)
 	eiej2=dot(pij,pij)
 c230520 squared invariant mass
 c	insert! energy cut
@@ -911,7 +798,7 @@ c	write(9,*)'pi=',pi
 c	write(9,*)'pj=',pj
 c	write(9,*)'pij=',pij
 c	write(9,*)'rmi,rmj=',rmi,rmj
-c	write(9,*)i,j,idp(i),idp(j)
+c	write(9,*)i,j,k(i,2),v(j,2)
 c072200	stop 1111
 	return   ! 072200
 	endif
@@ -920,15 +807,15 @@ c081000	ecut0=0.02    ! P.Yang
 c081000	if(ecut.le.ecut0) return
 c Note! energy cut can be taken into account HERE to decide coll. pairs
 c etc.  According to Y. Pang's opinions, May,1994, CCAST.(05/24/95) 
-	do n=1,4
-	px(n)=rp(n,i)
-	py(n)=rp(n,j)
-	pxc(n)=px(n)   
-        pyc(n)=py(n)   
+	do n1=1,4
+	px(n1)=v(i,n1)
+	py(n1)=v(j,n1)
+	pxc(n1)=px(n1)   
+        pyc(n1)=py(n1)   
 	enddo
 	ilo=0
-	kf1=idp(i)
-	kf2=idp(j)
+	kf1=k(i,2)
+	kf2=k(j,2)
 c160110
         ikf1=iabs(kf1)
         ikf2=iabs(kf2)
@@ -1068,12 +955,9 @@ c       sum of momentum and energy
 c       pei: two dimension array for input momentum and energy
 c       il and ih: lower and higher limits of sum
 c       peo: one dimension array of output momentum,energy & sqrt(s)
-        parameter (mplis=80000)
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         dimension pei(mplis,5),peo(5)
         do i=1,5
         peo(i)=0.
@@ -1137,26 +1021,24 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c       calculate the total cross section and decide the type of reaction
 c        (when ilo=0) or sample the t value as well (when ilo=1)
 cc	tsmp: t value sampled.
-cc	lmn: order number of happening process 
-cc	sig: the total cross section of parton kf1 colliding with kf2
-cc	kf3 and kf4: kf code of the colliding pair after interaction
+cc	lmn: order number happened process 
+cc	sig: the total cross section of parton kf1 collides with kf2
+cc	kf3 and kf4: kf code of the colliding pair after collision
 cc      eiej2: squared invariant mass of colliding pair
 c180520 jjj: jjj-th loop within a event
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
+	parameter (msca=20000)   ! 080520 
+
 c	leadding order pQCD differential cross section of 2->2 processes
 	external fs11_0,fs11_1,fs11_2,fs12_0,fs12_1,fsqq,fsgg_0,fsgg_1,
      c	fsqg
-
-	parameter (msca=20000,mplis=80000)   ! 080520
 
 	common/sa1/kjp21,non1,bp,iiii,neve,nout,nosc   ! 220803
         common/sa24/adj1(40),nnstop,non24,zstop   ! 240803 181003
         common/sa33/smadel,ecce,secce,parecc,iparres   ! 230520
         common/syspar_p/rsig1,pio,tcut
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)   ! 080520
         common/papr_p/core,xs,xu,xt,sm,as,dta,xa,sl0,tl0,qa,
      c  ea,sqq,sqg,sgg,pa(3),pip(6,msca),mtime,kfk,nsca,kpip(msca)
 c250803	common/work7/reac(9),crose(9)
@@ -1746,10 +1628,10 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine collis(ik1,ik2,kf3,kf4,tcp,jjj,kkk,iway,
      c   icnew,jcnew,lmn,time)   ! 120505 160110 
 c	performs parton-parton collision & updates particle list
-c       if lmn=4,6,& 7, updates 'parlist','pyjets',
+c       if lmn=4,6,& 7, updates 'pyjets',
 c        'sbe',diquark list,string list, & lc(1-2,m) either
 c	ik1,ik2: line number of the colliding pair in parton list
-c180520 kf3 and kf4: kf code of the colliding pair after interaction 
+c180520 kf3 and kf4: kf code of the colliding pair after collision 
 c	tcp: collision time
 c	jjj: jjj-th loop within a event
 c	if kkk=1 throw away current collision
@@ -1759,8 +1641,6 @@ c	if kkk=1 throw away current collision
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
       COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 160110
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         common/papr_p/core,xs,xu,xt,sm,as,dta,xa,sl0,tl0,qa,
      c  ea,sqq,sqg,sgg,pa(3),pip(6,msca),mtime,kfk,nsca,kpip(msca)
 	common/syspar_p/rsig1,pio,tcut
@@ -1796,34 +1676,34 @@ c	definition of ppsa(1), ..., and ppsa(4) are given in 'eloss'
 	double precision b(3)
 	adj12=adj1(12)
 c	write(9,*)'in collis adj12=',adj12   !sa
-	kf1=idp(ik1)
-	kf2=idp(ik2)
+	kf1=k(ik1,2)
+	kf2=k(ik2,2)
 	stili=0.
 c	stili: statistics of the times calling 'ti_li1'
 c180520 kf1 and kf2: kf code of the colliding pair before interaction
-c	write(9,*)'colli iiii,jjj,iprl=',iiii,jjj,iprl ! sa
+c	write(9,*)'colli iiii,jjj,n=',iiii,jjj,n ! sa
 c	write(9,*)'ik1,ik2,kf1,kf2=',ik1,ik2,kf1,kf2   ! sa
-c	do i=1,iprl   ! sa
-c	write(9,509)(pp(m,i),m=1,4),rmp(i)  ! sa
+c	do i=1,n   ! sa
+c	write(9,509)(p(i,m),m=1,4),k(i,2)  ! sa
 c	enddo   ! sa
 509     format(5(1x,f10.4))
 
 c       statistics of the total charge of partons
         ichabe=0.
-        do i=1,iprl
-        ik=idp(i)
+        do i=1,n
+        ik=k(i,2)
         ichabe=ichabe+ichge(ik)
         enddo
 
 	nsca=0
-	pi(4)=pp(4,ik1)
-	pj(4)=pp(4,ik2)
+	pi(4)=p(ik1,4)
+	pj(4)=p(ik2,4)
         pi_o(4)=pi(4)   
         pj_o(4)=pj(4)   
 	pij4=pi(4)+pj(4)
 	do i=1,3
-	pi(i)=pp(i,ik1)
-	pj(i)=pp(i,ik2)
+	pi(i)=p(ik1,i)
+	pj(i)=p(ik2,i)
         pi_o(i)=pi(i)   
         pj_o(i)=pj(i)   
 	b(i)=(pi(i)+pj(i))/pij4
@@ -1982,44 +1862,26 @@ c260620 write(9,*)'be. update particle list ik12,kf12=',ik1,ik2,kf1,kf2
 c230520	updates particle list  (note: line numbers of the colliding 
 c        pair after interaction are the same as ones before interaction)
 
-c230520 updates 'parlist', i.e. feedback final state of two parton scattering
+c230520 updates 'pyjets', i.e. feedback final state of parton scattering
 c        to ik1 & ik2
 	l=ik1
 	if(pip(4,1).lt.1.e-10)pip(4,1)=1.e-10   ! 031204
 	do k1=1,3
-	pp(k1,l)=pip(k1,1)
-	vp(k1,l)=pip(k1,1)/pip(4,1)
+	p(l,k1)=pip(k1,1)
 	enddo
-	pp(4,l)=pip(4,1)
-	idp(l)=kpip(1)
-	taup(l)=0.
-	rmp(l)=amass(kpip(1))
-c230520 updates 'pyjets'
-        k(l,2)=idp(l)
-        do j1=1,4
-        v(l,j1)=rp(j1,l)
-        p(l,j1)=pp(j1,l)
-        enddo
-        p(l,5)=rmp(l)
+	p(l,4)=pip(4,1)
+	k(l,2)=kpip(1)
+	p(l,5)=amass(kpip(1))
         v(l,5)=0.
 
 	l=ik2
 	if(pip(4,2).lt.1.e-10)pip(4,2)=1.e-10   ! 031204
 	do k1=1,3
-	pp(k1,l)=pip(k1,2)
-	vp(k1,l)=pip(k1,2)/pip(4,2)
+	p(l,k1)=pip(k1,2)
 	enddo
-	pp(4,l)=pip(4,2)
-	idp(l)=kpip(2)
-	taup(l)=0.
-	rmp(l)=amass(kpip(2))
-c230520 updates 'pyjets'
-        k(l,2)=idp(l)
-        do j1=1,4
-        v(l,j1)=rp(j1,l)
-        p(l,j1)=pp(j1,l)
-        enddo
-        p(l,5)=rmp(l)
+	p(l,4)=pip(4,2)
+	k(l,2)=kpip(2)
+	p(l,5)=amass(kpip(2))
         v(l,5)=0.
 c	write(9,*)'in collis, iiii,jjj,lmn=',iiii,jjj,lmn   ! sa
 	reac(lmn)=reac(lmn)+1.
@@ -2049,32 +1911,32 @@ c070720 update collision list
         if(mstj1_2.eq.1)goto 1004 ! w/ time-like branching
 1008    continue
 c240820 copies new string composed of final state parton pair (ik1 & ik2) 
-c        to the end of 'parlist' ('pyjets') 
+c        to the end of 'pyjets'   ! 051122 
         if(ik2.gt.ik1)then   ! 230520
         k(ik1,1)=2
         k(ik2,1)=1
-c       copy ik1 to iprl+1 (n+1)
+c       copy ik1 to n+1
         call coend(ik1)
-        icnew=iprl
-c       copy ik2 to iprl+1 (n+1)
+        icnew=n
+c       copy ik2 to n+1
         call coend(ik2)
-        jcnew=iprl
+        jcnew=n
         endif
         if(ik2.lt.ik1)then   ! 230520
         k(ik1,1)=1
         k(ik2,1)=2
-c       copy ik2 to iprl+1 (n+1)
+c       copy ik2 to n+1
         call coend(ik2)
-        jcnew=iprl
-c       copy ik1 to iprl+1 (n+1)
+        jcnew=n
+c       copy ik1 to n+1
         call coend(ik1)
-        icnew=iprl
+        icnew=n
         endif
         nstr1=nstr1+1
-        nstr1a(nstr1)=iprl-1
-        nstr1v(nstr1)=iprl
+        nstr1a(nstr1)=n-1
+        nstr1v(nstr1)=n
 c260620 write(9,*)'af. new string n-1,n,kf=',n-1,n,k(n-1,2),k(n,2)
-c260620 write(9,*)'ijcnew,idp=',icnew,jcnew,idp(icnew),idp(jcnew)
+c260620 write(9,*)'ijcnew,kf=',icnew,jcnew,k(icnew,2),k(jcnew,2)
 c080520 endif   
 
 c       treats scattering parton pair (scattered parton pair has been
@@ -2096,7 +1958,7 @@ c       throws away scattering parton pair (ik1 & ik2)
         endif   !! 2
 
         if(lmn.eq.4.or.lmn.eq.6)then   !! 3, 4:q1q1bar->q2q2bar, 6:qqbar->gg          
-        if(adj12.eq.1)then   !! 4 fragments with coalescence
+        if(adj12.eq.1)then   !! 4, fragments with coalescence
 c       throws away scattering parton pair (ik1 & ik2) 
         if(ik1.gt.ik2)then
         call parmov(ik1,ik1,ik2,lmn)
@@ -2280,7 +2142,7 @@ c-------finished----------------
         nsca0=kmsca 
 c220820 if(msca0.ne.nsca) goto 300    
 c        write(9,*)'af. ti_li1 iiii,kmsca,nsca=',iiii,kmsca,nsca   ! bh
-c        write(9,*)'ik1,ik2,iprl=',ik1,ik2,iprl   ! bh
+c        write(9,*)'ik1,ik2,n=',ik1,ik2,n   ! bh
 
 	icht=0
 	do i1=1,nsca
@@ -2294,51 +2156,33 @@ c        write(9,*)'ik1,ik2,iprl=',ik1,ik2,iprl   ! bh
 c0700   performs time_like branching finished---------------------------
 
 c240820
-c0800   'nsca' to 'parlist' ('pyjets')
+c0800   'nsca' to 'pyjets'
 c       two-body scattering: kf1+kf2->kf3+kf4
 
         if(nsca.eq.2)then
-c        write(9,*)'nsca=2 ik1,ik2,iprl,n,nsca=',ik1,ik2,iprl,n,nsca   ! bh
-c       updates 'parlist', i.e. feedback final state of two parton scattering
+c        write(9,*)'nsca=2 ik1,ik2,n,nsca=',ik1,ik2,n,nsca   ! bh
+c       updates 'pyjets', i.e. feedback final state of two parton scattering
 c        to ik1 & ik2
 	l=ik1
 	if(pip(4,1).lt.1.e-10)pip(4,1)=1.e-10   ! 031204
 	do k1=1,3
-	pp(k1,l)=pip(k1,1)
-	vp(k1,l)=pip(k1,1)/pip(4,1)
+	p(l,k1)=pip(k1,1)
 	enddo
-	pp(4,l)=pip(4,1)
-	idp(l)=kpip(1)
-	taup(l)=0.
-	rmp(l)=amass(kpip(1))
-c230520 updates 'pyjets'
-        k(l,2)=idp(l)
-        do j1=1,4
-        v(l,j1)=rp(j1,l)
-        p(l,j1)=pp(j1,l)
-        enddo
-        p(l,5)=rmp(l)
+	p(l,4)=pip(4,1)
+	k(l,2)=kpip(1)
+	p(l,5)=amass(kpip(1))
         v(l,5)=0.
 
 	l=ik2
 	if(pip(4,2).lt.1.e-10)pip(4,2)=1.e-10   ! 031204
 	do k1=1,3
-	pp(k1,l)=pip(k1,2)
-	vp(k1,l)=pip(k1,2)/pip(4,2)
+	p(l,k1)=pip(k1,2)
 	enddo
-	pp(4,l)=pip(4,2)
-	idp(l)=kpip(2)
-	taup(l)=0.
-	rmp(l)=amass(kpip(2))
-c230520 updates 'pyjets'
-        k(l,2)=idp(l)
-        do j1=1,4
-        v(l,j1)=rp(j1,l)
-        p(l,j1)=pp(j1,l)
-        enddo
-        p(l,5)=rmp(l)
+	p(l,4)=pip(4,2)
+	k(l,2)=kpip(2)
+	p(l,5)=amass(kpip(2))
         v(l,5)=0.
-c        write(9,*)'af. nsca=2,ik1,ik2,iprl,n,nsca=',ik1,ik2,iprl,n,nsca   ! bh
+c        write(9,*)'af. nsca=2,ik1,ik2,n,nsca=',ik1,ik2,n,nsca   ! bh
         goto 1008
         endif 
 
@@ -2369,7 +2213,7 @@ c       moves particle i1 to the first position 'nsca'
         pip(3,i1)=pip3
         pip(4,i1)=pip4
         pip(5,i1)=pip5
-        pip(6,i1)=pip6   ! 111122     
+        pip(6,i1)=pip6   ! 051122 changes from 5 to 6     
         endif
         enddo
         endif   ! 1
@@ -2395,7 +2239,7 @@ c       moves particle i1 to the first position 'nsca'
         pip(3,i1)=pip3
         pip(4,i1)=pip4
         pip(5,i1)=pip5
-        pip(6,i1)=pip6   ! 111122        
+        pip(6,i1)=pip6   ! 051122 changes from 5 to 6     
         endif
         enddo
         do i3=2,nsca
@@ -2418,23 +2262,23 @@ c       moves particle i3 to the second position in 'nsca'
         pip(3,i3)=pip3
         pip(4,i3)=pip4
         pip(5,i3)=pip5
-        pip(6,i3)=pip6   ! 111122
+        pip(6,i3)=pip6   ! 051122 changes from 5 to 6
         endif
         enddo
 
         endif   ! 2
 
         do i=1,3
-        px(i)=rp(i,ik1)   ! three position of ik1
-        py(i)=rp(i,ik2)   ! three position of ik2
+        px(i)=v(ik1,i)   ! three position of ik1
+        py(i)=v(ik2,i)   ! three position of ik2
         enddo
 c	induced parton is distributed randumly in between colliding pair
         do i=3,nsca
 	rl=pyr(1)   
 	do k1=1,3   
-	rp(k1,i)=px(k1)*rl+py(k1)*(1.-rl)   
+	v(i,k1)=px(k1)*rl+py(k1)*(1.-rl)   
 	enddo
-	rp(4,i)=tcp
+	v(i,4)=tcp
         enddo   
 
 c--------- keeps four momentum conservation-------
@@ -2447,8 +2291,8 @@ c        write(9,*)'ps=',(ps(i2),i2=1,4)   ! sa
         do i2=1,4
         pss(i1,i2)=pip(i2,i1)
         enddo
-        pss(i1,5)=rmp(i1)
-c       write(9,509)(pss(i1,m),m=1,4),rmp(l)  ! sa
+        pss(i1,5)=p(i1,5)
+c       write(9,509)(pss(i1,m),m=1,4),p(l,5)  ! sa
 	enddo
 c       adjust four momentum conservation by iteration,no more than
 c        5000 iterations
@@ -2461,55 +2305,37 @@ c        scattering pair
         pip(i2,i1)=pss(i1,i2)
         enddo
 c	write(9,*)'l=',l   ! sa
-c	write(9,509)(pp(m,l),m=1,4),rmp(l)  ! sa
+c	write(9,509)(p(l,m),m=1,4),p(l,5)  ! sa
 	enddo
 c---------- keep four momentum conservation finished -------------
 
-c       a part (first & second) of 'nsca' to 'parlist' ('pyjets'), i.e. 
+c       a part (first & second) of 'nsca' to 'pyjets', i.e. 
 c        feedback first & second partons in 'nsca' to ik1 & ik2
-c       updates 'parlist'
+c       updates 'pyjets'
 	l=ik1
 	if(pip(4,1).lt.1.e-10)pip(4,1)=1.e-10   ! 031204
 	do k1=1,3
-	pp(k1,l)=pip(k1,1)
-	vp(k1,l)=pip(k1,1)/pip(4,1)
+	p(l,k1)=pip(k1,1)
 	enddo
-	pp(4,l)=pip(4,1)
-	idp(l)=kpip(1)
-	taup(l)=0.
-	rmp(l)=amass(kpip(1))
-c       updates 'pyjets'
-        k(l,2)=idp(l)
-        do j1=1,4
-        v(l,j1)=rp(j1,l)
-        p(l,j1)=pp(j1,l)
-        enddo
-        p(l,5)=rmp(l)
+	p(l,4)=pip(4,1)
+	k(l,2)=kpip(1)
+	p(l,5)=amass(kpip(1))
         v(l,5)=0.
-c       updates 'parlist'
+c       updates 'pyjets'
 	l=ik2
 	if(pip(4,2).lt.1.e-10)pip(4,2)=1.e-10   ! 031204
 	do k1=1,3
-	pp(k1,l)=pip(k1,2)
-	vp(k1,l)=pip(k1,2)/pip(4,2)
+	p(l,k1)=pip(k1,2)
 	enddo
-	pp(4,l)=pip(4,2)
-	idp(l)=kpip(2)
-	taup(l)=0.
-	rmp(l)=amass(kpip(2))
-c       updates 'pyjets'
-        k(l,2)=idp(l)
-        do j1=1,4
-        v(l,j1)=rp(j1,l)
-        p(l,j1)=pp(j1,l)
-        enddo
-        p(l,5)=rmp(l)
+	p(l,4)=pip(4,2)
+	k(l,2)=kpip(2)
+	p(l,5)=amass(kpip(2))
         v(l,5)=0.
 c0800	finished----------------------------------------------
 
 c220820 deals with third & fourth partons in 'nsca'
         if(nsca.eq.3)then
-c        write(9,*)'nsca=3 ik1,ik2,iprl,n,nsca=',ik1,ik2,iprl,n,nsca   ! bh
+c        write(9,*)'nsca=3 ik1,ik2,n,nsca=',ik1,ik2,n,nsca   ! bh
 c       moves third induced partons to 'trs'
         ntrs=ntrs+1
         ktrs(ntrs,1)=3
@@ -2520,58 +2346,38 @@ c       moves third induced partons to 'trs'
         enddo
         ptrs(ntrs,5)=0.
         vtrs(ntrs,5)=0.
-c        write(9,*)'af. nsca=3 ik1,ik2,iprl,n,nsca=',ik1,ik2,iprl,n,nsca   ! bh
+c        write(9,*)'af. nsca=3 ik1,ik2,n,nsca=',ik1,ik2,n,nsca   ! bh
         goto 1008
         endif
 
         if(nsca.eq.4)then
-c        write(9,*)'nsca=4 ik1,ik2,iprl,n,nsca=',ik1,ik2,iprl,n,nsca   ! bh     
+c        write(9,*)'nsca=4 ik1,ik2,n,nsca=',ik1,ik2,n,nsca   ! bh     
 c       composes third & fourth partons in 'nsca' as a string & moves it 
-c        to the end of 'parlist' ('pyjets')
-c       updates 'parlist'
-        iprl=iprl+1
-        l=iprl
+c        to the end of 'pyjets'
+c       updates 'pyjets
+        n=n+1
+        l=n
         if(pip(4,3).lt.1.e-10)pip(4,3)=1.e-10   ! 031204
         do k1=1,3
-        pp(k1,l)=pip(k1,3)
-        vp(k1,l)=pip(k1,3)/pip(4,3)
+        p(l,k1)=pip(k1,3)
         enddo
-        pp(4,l)=pip(4,3)
-        idp(l)=kpip(3)
-        taup(l)=0.
-        rmp(l)=amass(kpip(3))
+        p(l,4)=pip(4,3)
+        k(l,1)=2   ! A
+        k(l,2)=kpip(3)
+        p(l,5)=amass(kpip(3))
+        v(l,5)=0.
 c       updates 'pyjets'
         n=n+1
-        k(n,1)=2   ! A
-        k(n,2)=idp(l)
-        do j1=1,4
-        v(n,j1)=rp(j1,l)
-        p(n,j1)=pp(j1,l)
-        enddo
-        p(n,5)=rmp(l)
-        v(n,5)=0.
-c       updates 'parlist'
-        iprl=iprl+1
-        l=iprl
+        l=n
         if(pip(4,4).lt.1.e-10)pip(4,4)=1.e-10   ! 031204
         do k1=1,3
-        pp(k1,l)=pip(k1,4)
-        vp(k1,l)=pip(k1,4)/pip(4,4)
+        p(l,k1)=pip(k1,4)
         enddo
-        pp(4,l)=pip(4,4)
-        idp(l)=kpip(4)
-        taup(l)=0.
-        rmp(l)=amass(kpip(4))
-c       updates 'pyjets'
-        n=n+1
-        k(n,1)=1   ! V
-        k(n,2)=idp(l)
-        do j1=1,4
-        v(n,j1)=rp(j1,l)
-        p(n,j1)=pp(j1,l)
-        enddo
-        p(n,5)=rmp(l)
-        v(n,5)=0.
+        p(l,4)=pip(4,4)
+        k(l,1)=1   ! V
+        k(l,2)=kpip(4)
+        p(l,5)=amass(kpip(4))
+        v(l,5)=0.
         goto 1008
         endif
 c220820        
@@ -2594,13 +2400,11 @@ c       ij: order # of spliting parton in parton list
 	INTEGER PYK,PYCHGE,PYCOMP
 
 	parameter (pio=3.1416)
-	parameter (msca=20000,mplis=80000)   ! 080520
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)   ! 080520
-	dimension pa1(4),pa2(4),p00(4)
+	parameter (msca=20000,mplis=80000)   ! 080520 
         common/papr_p/core,xs,xu,xt,sm,as,dta,xa,sl0,tl0,qa,
      c  ea,sqq,sqg,sgg,pa(3),pip(6,msca),mtime,kfk,nsca,kpip(msca)
 	common/sa24/adj1(40),nnstop,non24,zstop   ! 170205
+	dimension pa1(4),pa2(4),p00(4)
 	il=1
 cc	il=1 means the branching will go on, il=0 means 'stop'.
 	do i=1,4
@@ -2957,6 +2761,9 @@ c082200        if(dabs(1.-fr) .le. dep)goto 200
 cc200   write(17,*)'jj=',jj   ! w
 200     return
         end
+
+
+
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	function fap_qq(zz)
 c	split function for g-->q*q(-)
@@ -3568,12 +3375,11 @@ c	dell: energy loss per unit distance
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-	parameter (mplis=80000,msca=20000)
+	parameter (kszj=80000,mplis=80000,msca=20000)   ! 051122   
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
 	common/sa12/ppsa(5),nchan,nsjp,sjp,ttaup,taujp
 	common/sa24/adj1(40),nnstop,non24,zstop
-	common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)   
-	dimension rpo(4,mplis),ppo(4,mplis)   
+	dimension rpo(mplis,4),ppo(mplis,4)   
 c	rpo,ppo: parton four coordinate before Newton motion, four momentum 
 c	 before energy loss
 	dimension rr(3),pi(3),pia(3),deltp(3)
@@ -3583,14 +3389,14 @@ c	ppsa(3): cumulate the pz losed in an event
 c	ppsa(4): cumulate the e losed in an event
 	adj138=adj1(38)
 c	write(9,*)'adj138=',adj1(38)   ! sa
-	iprlo=iprl
-	do i=1,iprlo   ! 1
-	pei=pp(4,i)   ! energy before loss
-	ppo(4,i)=pei
+	no=n
+	do i=1,no   ! 1
+	pei=p(i,4)   ! energy before loss
+	ppo(i,4)=pei
 	do j=1,3
-	rr(j)=rp(j,i)-rpo(j,i)
-	pi(j)=pp(j,i)   ! three momentum before loss
-	ppo(j,i)=pi(j)
+	rr(j)=v(i,j)-rpo(i,j)
+	pi(j)=p(i,j)   ! three momentum before loss
+	ppo(i,j)=pi(j)
 	enddo
 	pt=pi(1)*pi(1)+pi(2)*pi(2)
 	if(pt.gt.1.e20)pt=1.e20
@@ -3607,12 +3413,12 @@ c	below ptmin='adj138' Gev/c jet can not loss energy
 c	'delte' should be less than energy of particle
 	if(pei.lt.1.e-20)pei=1.e-20
 	srtf=1.-delte/pei
-	pp(4,i)=pei-delte   ! energy after loss
+	p(i,4)=pei-delte   ! energy after loss
 	do j=1,3
 	pia(j)=srtf*pi(j)   ! three momentum after loss
 c	massless and collinear approximations
 	deltp(j)=pi(j)-pia(j)   ! three momentum loss
-	pp(j,i)=pia(j)   ! three momentum after loss
+	p(i,j)=pia(j)   ! three momentum after loss
 	ppsa(j)=ppsa(j)+pi(j)-pia(j)   ! cumulate three momentum loss
 	enddo
 	ppsa(4)=ppsa(4)+delte   ! cumulate energy loss
@@ -3633,30 +3439,29 @@ c       creates the collision time list after energy loss
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-        parameter (mplis=80000,mclis=280000)
+        parameter (kszj=80000,mclis=280000)   ! 051122
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
 	common/sa24/adj1(40),nnstop,non24,zstop   ! 210803 181003 161104
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         common/papr/t0,sig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
      c  ,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
         common/collist/lc(2,mclis),tc(2,mclis),icol
 	dddt=adj1(19)   ! 161104
 c	adj136=adj1(36)
         icol=1
-	do 100 i=2,iprl   ! upper diagonal
-	kfi=iabs(idp(i))
-c111122 if(kfi.gt.3 .and. kfi.ne.21)goto 100   ! 120620
-c       consider d,u,s their antiquarks, and gluon only   ! 120620
-        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 111122
+	do 100 i=2,n   ! upper diagonal
+	kfi=iabs(k(i,2))
+c051122 if(kfi.gt.3 .and. kfi.ne.21)goto 100   ! 120620
+c       consider d,u,s, their antiquarks, and gluon only   ! 120620 
+        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520
 c       consider d,u,s,c,b,t, their antiquarks, and gluon only   ! 080520
 	do 200 j=1,i-1   ! upper diagonal
-	kfj=iabs(idp(j))
-c111122 if(kfj.gt.3 .and. kfj.ne.21)goto 100   ! 120620
+	kfj=iabs(k(j,2))
+c051122 if(kfj.gt.3 .and. kfj.ne.21)goto 100   ! 120620
 c       consider d,u,s, their antiquarks, and gluon only   ! 120620
-        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 111122
+        if(kfi.gt.6 .and. kfi.ne.21)goto 100   ! 080520 051122
 c       consider d,u,s,c,b,t, their antiquarks, and gluon only   ! 080520
 	if(icol.gt.mclis) then
-        write(9,*)'icol over limit iprl,icol=',iprl,icol   ! sa
+        write(9,*)'icol over limit n,icol=',n,icol   ! sa
         stop 77777
         endif
 	tc(1,icol)=0.0
@@ -3688,7 +3493,7 @@ c       write(9,*)'i1,j1,tcicol=',i1,j1,tcicol   ! sa
         tc(1,i)=0.
         tc(2,i)=0.
         enddo
-	iprl0=iprl
+	n0=n
 	return
         end
 
@@ -3698,36 +3503,33 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine eto1g(ii,delte,deltp)
 c	transfer the losed energy to a gluon (added to the end of 
 c	 particle list)
-c	ii: the line number (in 'parlist') of parton which losed energy 
+c	ii: the line number (in 'pyjets') of parton which lossing energy 
 c	delte: energy losed
 c	deltp(3): three momentum losed
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-	parameter (mplis=80000)
-	common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
+	parameter (kszj=80000)   ! 051122
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
 	dimension deltp(3)
-	iprll=iprl+1
-	if(iprll.gt.mplis)then
-	write(9,*)'in parcas, mplis needs to be enlarged iprll=',iprll   ! sa
+	nl=n+1
+	if(nl.gt.kszj)then
+	write(9,*)'in parcas, kszj needs to be enlarged nl=',nl   ! sa
 	stop 9999   
 	endif
 	pp4=delte
-	pp(4,iprl+1)=pp4
+	p(n+1,4)=pp4
 	do i=1,3
 	ppi=deltp(i)
-	pp(i,iprl+1)=ppi
-	vp(i,iprl+1)=ppi/pp4
+	p(n+1,i)=ppi
 	enddo
-	taup(iprl+1)=0.
-	rmp(iprl+1)=0.
-	idp(iprl+1)=21
-	rp(4,iprl+1)=rp(4,ii)
+	p(n+1,5)=0.
+	k(n+1,2)=21
+	v(n+1,4)=v(ii,4)
 	do i=1,3
-        rp(i,iprl+1)=pyr(1)*rp(i,ii)
+        v(n+1,i)=pyr(1)*v(ii,i)
 	enddo
-	iprl=iprl+1
+	n=n+1
 	return
 	end
 
@@ -3737,54 +3539,51 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	subroutine eto2g(ii,delte,deltp)
 c	transfer the losed energy to two gluons (added to the end of 
 c	 particle list)
-c	ii: the line number (in 'parlist') of parton which losed energy 
+c	ii: the line number (in 'pyjets') of parton which losed energy 
 c	delte: energy losed
 c	deltp(3): three momentum losed
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-	parameter (mplis=80000)
-	common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
+	parameter (kszj=80000)   ! 051122
+	COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
 	dimension deltp(3)
-	iprll=iprl+1
-	if(iprll.gt.mplis)then
-	write(9,*)'in parcas, mplis needs to be enlarged iprll=',iprll   ! sa
+	nl=n+1
+	if(nl.gt.kszj)then
+	write(9,*)'in parcas, kszj needs to be enlarged nl=',nl   ! sa
 	stop 9999
 	endif
-	iprll=iprl+2
-	if(iprll.gt.mplis)then
-        write(9,*)'in parcas, mplis needs to be enlarged iprll=',iprll   ! sa
+	nl=n+2
+	if(nl.gt.kszj)then
+        write(9,*)'in parcas, kszj needs to be enlarged nl=',nl   ! sa
         stop 99999
         endif
 	pp4=pyr(1)*delte
 	if(pp4.lt.1.e-20)pp4=1.e-20
-	pp(4,iprl+1)=pp4
+	p(n+1,4)=pp4
 	pp42=delte-pp4
 	if(pp42.lt.1.e-20)pp42=1.e-20
-	pp(4,iprl+2)=pp42
+	p(n+2,4)=pp42
 	do i=1,3
 	ppi=pyr(1)*deltp(i)
-	pp(i,iprl+1)=ppi
+	p(n+1,i)=ppi
 	ppi2=deltp(i)-ppi
-	pp(i,iprl+2)=ppi2
-	vp(i,iprl+1)=ppi/pp4
-	vp(i,iprl+2)=ppi2/pp42
+	p(n+2,i)=ppi2
 	enddo
-	taup(iprl+1)=0.
-	taup(iprl+2)=0.
-	rmp(iprl+1)=0.
-        rmp(iprl+2)=0.
-	idp(iprl+1)=21
-        idp(iprl+2)=21
-	rp(4,iprl+1)=rp(4,ii)
-        rp(4,iprl+2)=rp(4,ii)
+	p(n+1,5)=0.
+        p(n+2,5)=0.
+	k(n+1,2)=21
+        k(n+2,2)=21
+	k(n+1,1)=1   ! 051122
+        k(n+2,1)=1   ! 051122
+	v(n+1,4)=v(ii,4)
+        v(n+2,4)=v(ii,4)
 	do i=1,3
-        rpi=pyr(1)*rp(i,ii)
-        rp(i,iprl+1)=rpi
-        rp(i,iprl+2)=rp(i,ii)-rpi
+        rpi=pyr(1)*v(ii,i)
+        v(n+1,i)=rpi
+        v(n+2,i)=v(ii,i)-rpi
 	enddo
-	iprl=iprl+2
+	n=n+2
 	return
 	end
 
@@ -3792,27 +3591,13 @@ c	deltp(3): three momentum losed
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
         subroutine coend(ii)   ! 160110
-c       copy parton ii to the end of 'parlist'
 c       copy parton ii to the end of 'pyjets'
-        parameter (mplis=80000,kszj=80000)
+        parameter (kszj=80000)   ! 051122
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
-        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   
-        common/parlist/rp(4,mplis),pp(4,mplis), 
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis) 
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)    
         common/sa26/ndiq(kszj),npt(kszj),ifcom(kszj),idi,idio   
-        iprl=iprl+1
-        do i1=1,3
-        rp(i1,iprl)=rp(i1,ii)
-        pp(i1,iprl)=pp(i1,ii)
-        vp(i1,iprl)=vp(i1,ii)
-        enddo
-        rp(4,iprl)=rp(4,ii)
-        pp(4,iprl)=pp(4,ii)
-        taup(iprl)=taup(ii)
-        rmp(iprl)=rmp(ii)
-        idp(iprl)=idp(ii)
         n=n+1
         do i3=1,5
         k(n,i3)=k(ii,i3)
@@ -3954,22 +3739,19 @@ c       if 'ii' is not equal to ik1 (ik2) and lmn=4 or 6, moves parton 'ii'
 c        to 'trs' as well as updates lists   
 c       otherwise, throws away parton ii (ii is equal to ik1 (ik2)),  
 c        i.e. updates lists
-c       updates 'parlist' one step downward from ii+1 to iprl 
 c       updates 'pyjets' one step downward from ii+1 to n
 c       updates 'sbe' one step downward from ii+1 to nbe if ii.le.nbe
 c       updates diquark list
 c       updates string list
 c       updates collision time list
 c       ik1 & ik2 are the line number (in parton list) of colliding pair
-        parameter (mplis=80000,kszj=80000)
+        parameter (kszj=80000)   ! 051122
         parameter (mclis=280000)
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
         COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   
         common/sbe/nbe,nonbe,kbe(kszj,5),pbe(kszj,5),vbe(kszj,5)
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         common/collist/lc(2,mclis),tc(2,mclis),icol
         common/sa24/adj1(40),nnstop,non24,zstop   ! 070720
         common/sa26/ndiq(kszj),npt(kszj),ifcom(kszj),idi,idio
@@ -3983,12 +3765,12 @@ c       moves parton ii (not equal to ik1 or ik2) to 'trs'
      c   (ii.ne.ik1 .or. ii.ne.ik2))then
         ntrs=ntrs+1
         ktrs(ntrs,1)=3
-        ktrs(ntrs,2)=idp(ii)
+        ktrs(ntrs,2)=k(ii,2)
         do j=1,4
-        ptrs(ntrs,j)=pp(j,ii)
-        vtrs(ntrs,j)=rp(j,ii)
+        ptrs(ntrs,j)=p(ii,j)
+        vtrs(ntrs,j)=v(ii,j)
         enddo
-        ptrs(ntrs,5)=rmp(ii)
+        ptrs(ntrs,5)=p(ii,5)
         vtrs(ntrs,5)=0.
         endif
 
@@ -4000,28 +3782,10 @@ c       updates diquark list
         if(jj.ge.ii)ifcom(j1)=jj-1   
         if(kk.ge.ii)npt(j1)=kk-1 
         enddo
-        do i2=ii+1,iprl
+        do i2=ii+1,n
         i3=i2-1
         ndiq(i3)=ndiq(i2)
         enddo  
-
-c       updates particle list 'parlist' 
-        if(ii.eq.iprl)iprl=iprl-1
-        if(ii.lt.iprl)then
-        do i2=ii+1,iprl
-        i3=i2-1
-        do i1=1,3
-        rp(i1,i3)=rp(i1,i2)
-        pp(i1,i3)=pp(i1,i2)
-        vp(i1,i3)=vp(i1,i2)
-        enddo
-        rp(4,i3)=rp(4,i2)
-        pp(4,i3)=pp(4,i2)
-        taup(i3)=taup(i2)
-        rmp(i3)=rmp(i2)
-        idp(i3)=idp(i2)
-        enddo
-        iprl=iprl-1
 
 c       updates particle list 'pyjets'
         if(ii.eq.n)n=n-1
@@ -4038,7 +3802,6 @@ c       updates particle list 'pyjets'
         endif
 c       if(ik1.gt.ii)ik1=ik1-1   ! 280620
 c       if(ik2.gt.ii)ik2=ik2-1   ! 280620
-        endif
 
 c       updates particle list 'sbe'
         if(ii.eq.nbe)nbe=nbe-1
@@ -4081,16 +3844,14 @@ c       moves all conponents of 'istr1'-th string out
 c       istr1: order number of string (in string list) to be moved
 c       istr1a: line number (in parton list) of first component of above string 
 c       istr1v: line number (in parton list) of last component of above string
-c       ik1 & ik2 are line # of collidin pair in parton list 'parlist' 
-        parameter (mplis=80000,kszj=80000)
+c       ik1 & ik2 are line # of collidin pair in parton list 'pyjets' 
+        parameter (kszj=80000)   ! 051122
         parameter (mclis=280000)
 	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
 	IMPLICIT INTEGER(I-N)
 	INTEGER PYK,PYCHGE,PYCOMP
         COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   
         common/sbe/nbe,nonbe,kbe(kszj,5),pbe(kszj,5),vbe(kszj,5)
-        common/parlist/rp(4,mplis),pp(4,mplis),
-     c  taup(mplis),rmp(mplis),vp(3,mplis),iprl,idp(mplis)
         common/collist/lc(2,mclis),tc(2,mclis),icol
         common/sa26/ndiq(kszj),npt(kszj),ifcom(kszj),idi,idio
         common/sa28/nstr,nstra(kszj),nstrv(kszj),nstr0,

@@ -184,6 +184,10 @@ bSamp=2     # (D=2) psno, controls b parameter sampling method.
 iFrame=1    # (D=1) collision frame, 1=collider, 0=fixed target.
 cmsE=200    # (GeV) ee, colliding CMS energy / incident momentum
 
+iOverlap=0 # (D=0) adj(30) =0, without more requirements
+            #              =1, distributes the participant nucleons in 
+            #                  the overlapping region forcely
+
 iChannel=1  # (D=8) nchan, =0: inelastic (INEL)
             #               1: Non Single Difractive (NSD)
             #               2: qqb --> gamma^*/Z^0, used to generate Drell-Yan
@@ -197,10 +201,10 @@ iChannel=1  # (D=8) nchan, =0: inelastic (INEL)
             #               setting of 0,1,3,4,5,7,8 and 9 is ready
 
 iHadcas=1   # (D=1) kjp21, =0, without hadcas; 1, with hadcas
-iStage=4    # (D=4) adj40, =1, stops event after parini
-            #               2, ... parcas
-            #               3, ... 
-            #               4, ... hadcas
+iStage=4    # (D=4) adj(40), =1, stops event after parini
+            #                 2, ... parcas
+            #                 3, ... 
+            #                 4, ... hadcas
 
 # LUND string parameter
 aLund=0.3  # (D=0.3)  adj(6), alpha in the LUND string fragmentation function.
@@ -225,7 +229,11 @@ iStringTension=4    # (D=4) kjp22, selects the form of string rension in sfm.
                     #             4, default string tension
 iPhase=0    # (D=0) adj(21), 1=with or 0=without phase space constraint in the 
             #                coalescence.
-i_CME=1     # (D=1) adj(23), choice of chiral magnetic effect(CME)
+iDeexc=0    # (D=0) adj(29), selects fragmentation function in deexcitation of 
+            #       the energetic quark in coalescence
+            #       =0, LUND string fragmentation function
+            #       =1, Field-Feynman parametrization function
+iCME=1     # (D=1) adj(23), choice of chiral magnetic effect(CME)
             #       =0, no CME-induced charge separation mechanism
             #       =1, with CME-induced charge separation mechanism
 
@@ -312,7 +320,7 @@ echo "0.5,0.6,2.,0.05,0.35,20     ! tdh,cptl,cptu,cptl2,cptu2,itnum" >> usu.dat
 echo "1,7,0,2,3,2                                   ! mstu21,mstj1_1,mstj1_2,mstj2,mstj3,itorw" >> usu.dat
 echo "${kParcas},0.47,0.4,1000,0,${aLund},${bLund},4,1.9,${kPythia}      ! adj1(1)- adj1(10)  " >> usu.dat
 echo "${dtHadcas},${iHadronization},26,18,1.,1,4.,0,${dtParcas},1        ! adj1(11)- adj1(20) " >> usu.dat
-echo "${iPhase},4.,${i_CME},0.15,0.4,${iRandom},800000.,1.,0.26,2.       ! adj1(21)- adj1(30) " >> usu.dat
+echo "${iPhase},4.,${iCME},0.15,0.4,${iRandom},800000.,1.,${iDeexc},${iOverlap}  ! adj1(21)- adj1(30) " >> usu.dat
 echo "0.1,0.3,0.4,0.36,1.,0.,100.,3.,2.,${iStage}                        ! adj1(31)- adj1(40) " >> usu.dat
 echo "${iStringTension},2,2,0.,0                   ! kjp22,kjp23,kjp24,parp78,mstptj" >> usu.dat
 echo "0.,0,${pTperturb},0.05,1.,0.2,0.05           ! parecc,iparres,smadel,dparj4,cp0,cr0,seco" >> usu.dat
@@ -541,16 +549,18 @@ cd ./${cmsE}GeV
 # K : kPythia (in parini)
 #     kI: kPythia (in parini)
 #     kC: kParcas
+# iO: iOverlap
 # iH: iHadronization
 # iHc: iHadcas
 # iStg: iStage
 # iC : iChannel
 # iStr: iStringTension
 # iP : iPhase
-# iM : i_cMe
+# iD : iDeexc
+# iM : icMe
 # Default 
 dir="./b${b_min}_${b_max}_aL${aLund}_bL${bLund}_K${kPythia}_iStg${iStage}"
-# dir="./b${b_min}_${b_max}_aL${aLund}_bL${bLund}_kI${kPythia}_kC${kParcas}_iH${iHadronization}_iHc${iHadcas}_iStr${iStringTension}_iP${iPhase}_iM${i_CME}_iC${iChannel}_iStg${iStage}"
+# dir="./b${b_min}_${b_max}_aL${aLund}_bL${bLund}_kI${kPythia}_kC${kParcas}_iO${iOverlap}_iH${iHadronization}_iHc${iHadcas}_iStr${iStringTension}_iP${iPhase}_iD${iDeexc}_iM${iCME}_iC${iChannel}_iStg${iStage}"
 
 if [[ "${naProj}" = "1" && "${naTarg}" = "1" ]]; then
 # Elementary NN collision
@@ -831,10 +841,10 @@ echo
 #           =other, seed from the real-time clock
 #       27: largest momentum allowed for produced particle
 #       28: concerned to the largest position allowed for produced particle
-#       29: width of two dimension Gaussian distribution for sampling $p_x$ and 
-#           $p_y$ the produced quark pair in the deexcitation of energetic quark
-#            in the Monte Carlo coalescence model
-#       30: maximum $p_T^2$ in above two dimension Gaussian distribution.
+#       29: =0, Lund string fragmentation function is used in coalescence model
+#           =1, Field-Feymman fragmentation function is used in coalescence model
+#       30: =0, without more requirements
+#           =1, distributes the participant nucleons in overlapping areas forcely
 #       31: parj(1) in PYTHIA 
 #       32: parj(2) in PYTHIA 
 #       33: parj(3) in PYTHIA 

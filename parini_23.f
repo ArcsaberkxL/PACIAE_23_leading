@@ -118,6 +118,7 @@ c	 nucleons in overlap region)   ! 131212
         sumx2=0.
         sumy2=0.
         sump=0.
+        adj130 = adj1(30)   !Lei20221212
 c270312
 
 
@@ -163,22 +164,26 @@ c       distribute projectile nucleons by Woods-Saxon   ! 060921
 	r0=r0p
 	am=suppm   ! upper bound in sampling the radius of projectile nucleon
 	ac=suppc   ! maximum radius for projectile
-c060921 ratps=vneump/nap   ! ratio of projectile participant nucleons to total 
+        ratps=vneump/nap   ! ratio of projectile participant nucleons to total 
 c	if(iii.eq.10)write(9,*)'nap,vneump,ratps=',nap,vneump,ratps
 	do i1=1,nap
-c060921 rann=pyr(1)
-c       if(rann.lt.ratps)then
+        if( ABS(adj130 - 1.) .le. 1D-15 )then   !Lei20221212 i.e. adj130=1, avoids unexpected bugs.
+        rann=pyr(1)
+        if(rann.lt.ratps)then
 c       sample position of projectile nucleon in overlap region of colliding 
-c	 nuclei
-c060921 call arrove(i1,1,sumx,sumy,sumxy,sumx2,sumy2,sump,
-c060921 c	 alp,r0,am,ac)   ! 270312 131212 101014
-c060921 else
+c         nuclei
+        call arrove(i1,1,sumx,sumy,sumxy,sumx2,sumy2,sump,
+     c       alp,r0,am,ac)   ! 270312 131212 101014
+        else
 c	sample position of projectile nucleon according to Woods-Saxon
 c	 distribution
-	call woodsax_samp(i1,1,alp,r0,am,ac,0)   ! 230311 060921
+        call woodsax_samp(i1,1,alp,r0,am,ac,1)   ! 230311
 c230311 last argument here is 'iway', iway=1: particle i1 must be outside the 
 C230311  overlap region of colliding nuclei, iway=0: no more requirement 
-c060921 endif
+        endif
+        elseif( ABS(adj130 - 0.) .le. 1D-15 )then   !Lei20221212 i.e. adj130=0
+        call woodsax_samp(i1,1,alp,r0,am,ac,0)   ! 230311 060921
+        endif
 	enddo
 c230311
 c	distribute target nucleons by Woods-Saxon   ! 060921
@@ -215,19 +220,23 @@ c	distribute target nucleons by Woods-Saxon   ! 060921
 	r0=r0t
 	am=suptm   ! upper bound in sampling the radius of target
 	ac=suptc   ! maximum radius for target
-c060921 ratps=vneumt/nat   ! ratio of target participant nucleons to total 
+        ratps=vneumt/nat   ! ratio of target participant nucleons to total 
 	do i1=1,nat
 	i2=i1+nap
-c060921 rann=pyr(1)
-c060921 if(rann.lt.ratps)then
+        if( ABS(adj130 - 1.) .le. 1D-15 )then   !Lei20221212 i.e. adj130=1
+        rann=pyr(1)
+        if(rann.lt.ratps)then
 c       sample position of target nucleon in overlap region of colliding nuclei
-c060921 call arrove(i2,0,sumx,sumy,sumxy,sumx2,sumy2,sump,
-c060921 c	 alp,r0,am,ac)   ! 270312 131212 101014
-c060921 else
+        call arrove(i2,0,sumx,sumy,sumxy,sumx2,sumy2,sump,
+     c       alp,r0,am,ac)   ! 270312 131212 101014
+        else
 c	sample position of target nucleon according to Woods-Saxon
 c	 distribution
-	call woodsax_samp(i2,0,alp,r0,am,ac,0)   ! 060921
-c060921 endif
+        call woodsax_samp(i2,0,alp,r0,am,ac,1)
+        endif
+        elseif( ABS(adj130 - 0.) .le. 1D-15 )then   !Lei20221212 i.e. adj130=0
+        call woodsax_samp(i2,0,alp,r0,am,ac,0)   ! 060921
+        endif
 	enddo
 c191110
         do i=1,nap
@@ -290,23 +299,6 @@ c180921 ineumt=int(vneumt)   ! 100821
 	call woodsax_samp(i2,0,alp,r0,am,ac,0)
 	enddo
 c240513
-c100821 discribute vneumt target nucleons 
-c180921 do i1=napt+1,nat
-c180921 i2=i1+nap
-c180921 xf=ppbi*bp
-c       if(iii.eq.1)print*,'ppbi=',ppbi
-c       on surface of a sphere centered at projectile proton and with radius 
-c        of ppbi*bp
-c       call samp(xf,i2)
-c       in a sphere centered at projectile proton and with radius 
-c        of ppbi*bp
-c180921 call sampi(xf,i2)   !   centered at origin
-c       move to the position of projectile proton
-c180921 c17(i2,1)=c17(i2,1)+c17(1,1)   ! Lei
-c180921 c17(i2,2)=c17(i2,2)+c17(1,2)
-c180921 c17(i2,3)=c17(i2,3)+c17(1,3)
-c180921 enddo
-c100821
 c050322
         do i=nap+1,nap+nat
         c17(i,1)=c17(i,1)-0.5*bp
@@ -366,19 +358,6 @@ c100821 move x-component of origin to 0.5*bp
         if(i.eq.1)c17(nap+1,i)=-0.5*bp   ! 0.->-0.5*bp
         enddo
 c240513
-c100821 discribute vneump projectile nucleons
-c180921 do i1=napt+1,nap
-c180921 xf=ppbi*bp
-c       if(iii.eq.1)print*,'ppbi=',ppbi
-c       on surface of a sphere centered at target proton and with radius
-c        of ppbi*bp
-c       call samp(xf,i1)
-c       in a sphere centered at target proton and with radius
-c        of ppbi*bp
-c180921 call sampi(xf,i1)
-c180921 enddo
-c100821
-
 c	p+p or lepton+p   ! 070417
 	elseif((ipden.eq.0 .and. itden.eq.0) .or.
      c   (itden.eq.0 .and. ipden.ge.11))then   !! 070417

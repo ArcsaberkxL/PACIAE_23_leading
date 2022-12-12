@@ -1482,7 +1482,7 @@ c        distribution (exponential distribution) ! 081022
 
 c	Sample z (energy fraction of created qqba pair taking from source
 c        q (qba)) by Field-Feymman fragmentation function 081022
-        call funcz(z1)
+        call funcz(z1,ii)   ! 081222
 
 	e1=z1*e0 ! energy of first generation qqba pair
 	p1(4)=e1
@@ -1624,26 +1624,51 @@ c280822 pnn(ii1,5)=p(ii,5)
 
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-	subroutine funcz(zz)
-c       Sample zz from Field-Feymman fragmentation function using selecting 
-c        sample method	  
-c	Distribution function: f(z)dz=[1-a+3*a*(1-z)**2]dz, 0<z<1.
-c	The largest value of function: fmax=f(0)=1-a+3*a=1+2*a.
+	subroutine funcz(zz,ij)   ! 081222
+c       Sample daughter energy fraction, zz, from mother according to 
+c        fragmentation function by selecting sample method 
+c       Field-Feymman fragmentation function is used if adj1(29)=1 
+c       Lund string fragmentation function is used if adj1(29)=0  
+c	FF fragmentation function: f(z)dz=[1-a+3*a*(1-z)**2]dz, 0<z<1,
+c	 and its largest value: fmax=f(0)=1-a+3*a=1+2*a.
+c       Lund string fragmentation function: f(z)=(1/z)*(1-z)^a
+c        *exp(-b*m_{\per}^2/z) \sim (1/z)*(1-z)^a*exp(-2.36*b/z)
+c        assume: m_{\per}^2 \sim <p_T>^2+m_u^2 \sim 1.5^2+0.333^2=2.36
+c       ij: number of calling 'funcz'
 C...Double precision and integer declarations.
       IMPLICIT DOUBLE PRECISION(A-H, O-Z)
       IMPLICIT INTEGER(I-N)
       INTEGER PYK,PYCHGE,PYCOMP
+      common/sa1/kjp21,non1,bp,iii,neve,nout,nosc   ! 081222 
       common/sa24/adj1(40),nnstop,non24,zstop
-	a=adj1(6)   ! 0.77  
-	b=3.*a   
-	fmax=1-a+b   
+	a=adj1(6)   
+	b=adj1(7)   ! 081222
+        adj29=adj1(29)   ! 081222
+c081222
+        if(adj29.eq.0 .and. iii.eq.1 .and. ij.eq.1)then
+        fmax=0.
+        z1=0.025
+        do i1=1,20
+        z=z1+(i1-1)*0.05    
+        fzz=(1/z)*(1-z)**a*dexp(-2.36*b/z)
+        if(fzz.gt.fmax)fmax=fzz    
+        enddo
+        else      
+	fmax=1+2*a
+        endif  
+c081222      
 100	ran1=pyr(1)
 	ran2=pyr(1)
 	fm=ran1*fmax
-c101204	fz=1.-0.77+3*0.77*(1.-ran2)**2.
-c101204	if(fm.le.fz)goto 100
-	fz=1.-a+b*(1.-ran2)**2.   ! 101204
-      if(fm.gt.fz)goto 100   ! 101204
+c081222
+        if(adj29.eq.0)then
+        fran2=(1/ran2)*(1-ran2)**a*dexp(-2.36*b/ran2)
+        elseif(adj29.eq.1)then        
+	fran2=1.-a+3*a*(1.-ran2)**2.   ! 101204
+        else
+        endif   
+c081222        
+      if(fm.gt.fran2)goto 100   ! 101204
 	zz=ran2  	
 	return 
 	end
