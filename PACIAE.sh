@@ -319,15 +319,15 @@ echo "40.,40.,25,10.                  ! para1_1,para1_2,para2,para4" >> usu.dat
 echo "0.5,0.6,2.,0.05,0.35,20     ! tdh,cptl,cptu,cptl2,cptu2,itnum" >> usu.dat
 echo "1,7,0,2,3,2                                   ! mstu21,mstj1_1,mstj1_2,mstj2,mstj3,itorw" >> usu.dat
 echo "${kParcas},0.47,0.4,1000,0,${aLund},${bLund},4,1.9,${kPythia}      ! adj1(1)- adj1(10)  " >> usu.dat
-echo "${dtHadcas},${iHadronization},26,18,1.,1,4.,0,${dtParcas},1        ! adj1(11)- adj1(20) " >> usu.dat
+echo "${dtHadcas},${iHadronization},26,18,1.,1,2.,0,${dtParcas},1        ! adj1(11)- adj1(20) " >> usu.dat
 echo "${iPhase},4.,${iCME},0.15,0.4,${iRandom},800000.,1.,${iDeexc},${iOverlap}  ! adj1(21)- adj1(30) " >> usu.dat
 echo "0.1,0.3,0.4,0.36,1.,0.,100.,3.,2.,${iStage}                        ! adj1(31)- adj1(40) " >> usu.dat
 echo "${iStringTension},2,2,0.,0                   ! kjp22,kjp23,kjp24,parp78,mstptj" >> usu.dat
 echo "0.,0,${pTperturb},0.05,1.,0.2,0.05           ! parecc,iparres,smadel,dparj4,cp0,cr0,seco" >> usu.dat
-echo "0.35776,0.71552                 ! csp_31,csp_32"             >> usu.dat
-echo "0.29198,0.58396,0.85464         ! csp_41,csp_42,csp_43"      >> usu.dat
+echo "0.35776,0.71552                 ! csp_31,csp_32"               >> usu.dat
+echo "0.29198,0.58396,0.85464         ! csp_41,csp_42,csp_43"        >> usu.dat
 echo "0.23894,0.47788,0.71113,0.91086 ! csp_51,csp_52,csp_53,csp_54" >> usu.dat
-echo "0.19964,0.39927,0.59872,0.79707,0.99180 ! csp_61,csp_62,csp_63,csp_64,csp_65" >> usu.dat
+echo "0.19964,0.39927,0.59872,0.79707,0.99180 ! csp_61,csp_62,csp_63,csp_64,csp_65"   >> usu.dat
 ####################               usu.dat              ########################
 ################################################################################
 ################                                            ####################
@@ -558,9 +558,10 @@ cd ./${cmsE}GeV
 # iP : iPhase
 # iD : iDeexc
 # iM : icMe
+# pTp : pTperturb
 # Default 
 dir="./b${b_min}_${b_max}_aL${aLund}_bL${bLund}_K${kPythia}_iStg${iStage}"
-# dir="./b${b_min}_${b_max}_aL${aLund}_bL${bLund}_kI${kPythia}_kC${kParcas}_iO${iOverlap}_iH${iHadronization}_iHc${iHadcas}_iStr${iStringTension}_iP${iPhase}_iD${iDeexc}_iM${iCME}_iC${iChannel}_iStg${iStage}"
+# dir="./b${b_min}_${b_max}_aL${aLund}_bL${bLund}_kI${kPythia}_kC${kParcas}_pTp${pTperturb}_iO${iOverlap}_iH${iHadronization}_iHc${iHadcas}_iStr${iStringTension}_iP${iPhase}_iD${iDeexc}_iM${iCME}_iC${iChannel}_iStg${iStage}"
 
 if [[ "${naProj}" = "1" && "${naTarg}" = "1" ]]; then
 # Elementary NN collision
@@ -658,8 +659,8 @@ echo
 # nat(nzt): nucleons (protons) number of target
 #
 # for eA, nu_eA, etc.
-# e^-A: nap=1,nzp=-1,ipden=11,itden=1, 
-# e^+A: nap=1,nzp=1,ipden=11,itden=1, 
+# e^-A: nap=1,nzp=-1,ipden=11,itden=1,
+# e^+A: nap=1,nzp=1,ipden=11,itden=1,
 # nu_eA: nap=1,nzp=-1,ipden=12,itden=1,
 # nu_ebarA: nap=1,nzp=1,ipden=12,itden=1.
 #
@@ -698,40 +699,40 @@ echo
 #         =2, for e+e-
 #
 # ispmax,isdmax,iflmax
-#  ispmax: maximum # of different particle pieces to be considered    
+#  ispmax: maximum # of different particle pieces to be considered
 #  isdmax: maximum # of different distributions to be considered
 #  iflmax: maximum # of windows to be set, =0 means no window at all
 #
 # ispkf(i,i=1,ispmax):
-# KF code: particle code used in PYTHIA and PACIAE, 
-#          (see detail in reference: arXiv:hep-ph/0603175) 
+# KF code: particle code used in PYTHIA and PACIAE,
+#          (see detail in reference: arXiv:hep-ph/0603175)
 #
 # asd(i=1,isdmax): interval of the i-th distribution
 #  for pp, pbarp etc.
 #      i=1: rapidity distribution
 #       =2: transverse monmentum distribution
 #       =3: pesudorapidity distribution
-#  for ep, nu_ep, etc. 
+#  for ep, nu_ep, etc.
 #      i=1: Q^2=-q^2 (fq2 in code) distribution
 #       =2: W^2 (w21) distribution
 #       =3: y (yyl) distribution
-#       =4: p_h (pph) distribution   
+#       =4: p_h (pph) distribution
 #       =5: z (zl) distribution
 #
 # afl(j,i,1): lower-boundary of i-th window for j-th particle
 # afl(j,i,2): upper-boundary of i-th window for j-th particle
 #  for pp, pbarp etc.
 #      i=1, rapidity window
-#       =2, transverse monmentum 
-#       =3, pesudorapidity 
-#  for ep, nu_ep, etc. 
+#       =2, transverse monmentum
+#       =3, pesudorapidity
+#  for ep, nu_ep, etc.
 #      i=1, Q^2=-q^2 window
-#       =2, W^2 
-#       =3, y 
+#       =2, W^2
+#       =3, y
 #       =4, p_h (haron momentum)
-#       =5: z 
+#       =5: z
 #
-# parp21,parp22,ee  
+# parp21,parp22,ee
 #  parp21: lowest CM energy running 'pythia' if nchan=6
 #  parp22: lowest CM energy for running 'pythia' if nchan=3
 #  ee= cms energy if ifram=1 (collider)
@@ -747,30 +748,30 @@ echo
 #  nchan: to choose which subset of parton-parton subprocesses to include in
 #         the generration
 #         =0, inelastic (INEL)
-#         =1, Non Single Difractive (NSD) 
+#         =1, Non Single Difractive (NSD)
 #         =2, qqb --> gamma^*/Z^0, to generate Drell-Yan
 #         =3, J/psi production
 #         =4, heavy-flavor production
 #         =5, direct photon
 #         =6, soft only
-#         =7, default PYTHIA 
+#         =7, default PYTHIA
 #
 # para13,para14,psno,para15,para16,ajpsi,vneum
 #  para13: totle cross-section of J/Psi + n
-#  para14: totle cross-section of J/Psi + meson 
-#  psno: =0 fixed impact parameter 
+#  para14: totle cross-section of J/Psi + meson
+#  psno: =0 fixed impact parameter
 #        =1 impact parameter is sampled by systematic sampling method
-#        =2 randomly sampled impact parameter 
+#        =2 randomly sampled impact parameter
 #  para15: totle cross-section of Psi' + n
 #  para16: totle cross-section of Psi' + meson
 #  ajpsi: not used now
 #  vneum: relevant to average binary collision number, now it is recalculated
 #         in program
 #
-# para1_1,para1_2,para2,para4  
+# para1_1,para1_2,para2,para4
 #  para1_1: nn total cross section used in parton initiation
 #  para1_2: nn total cross section used in hadron cascade
-#  para2: totle cross-section of pi-nucleon 
+#  para2: totle cross-section of pi-nucleon
 #  para4: totle cross-section of pi-pi
 #
 # tdh,cptl,cptu,cptl2,cptu2,itnum
@@ -800,13 +801,13 @@ echo
 #          =1, Wang's nuclear shadowing (PLB 527(2002)85).
 #       6: alpha in the LUND string fragmentation function (parj(41) in PYTHIA)
 #       7: beta in the LUND string fragmentation function (parj(42) in PYTHIA)
-#       8: mstp(82) in PYTHIA 
+#       8: mstp(82) in PYTHIA
 #       9: parp(81) in PYTHIA
 #       10: K factor (parp(31) in PYTHIA).
 #       11: time accuracy used in the hadron cascade
-#       12: model for hadronization 
+#       12: model for hadronization
 #           =0 string fragmentation,
-#           =1 Monte Carlo coalescence model. 
+#           =1 Monte Carlo coalescence model.
 #       13: dimension of meson table considered in coalescence model.
 #       14: dimension of baryon table considered coalescence model.
 #       15: string tension of qqbar simple string
@@ -814,14 +815,13 @@ echo
 #           Monte Carlo coalescence model.
 #       17: the threshold energy in the deexcitation of energetic quark in 
 #           the Monte Carlo coalescence model.
-#       18: with or without Pauli blocking in the parton cascade
-#           =0, without Pauli blocking
-#           =1, with Pauli blocking.
-#       19: time accuracy used in the parton cascade 
+#       18: =0, rest partons hadronize by string fragmentation
+#           =1, rest partons hadronize by coalescence
+#       19: time accuracy used in the parton cascade
 #       20: the optional parton-parton cross section in the parton rescattering
-#           =0, LO pQCD parton-parton cross section 
-#           =1, keeping only leading divergent terms in the LO pQCD 
-#              parton-parton cross section (B. Zhang)
+#           =0, LO pQCD parton-parton cross section
+#           =1, keeping only leading divergent terms in the LO pQCD
+#               parton-parton cross section (B. Zhang)
 #           =2, the same as 0 but flat scattering angle distribution is assumed
 #           =3, the same as 1 but flat scattering angle distribution is assumed.
 #       21: with or without phase space constraint in the Monte Carlo 
@@ -829,9 +829,9 @@ echo
 #          =0, without phase space constraint
 #          =1, with phase space constraint
 #       22: critical value (D=$) of the product of radii in position and 
-#           momentum phase spaces 
+#           momentum phase spaces
 #       23: choice of chiral magnetic effect(CME)
-#           =0: no CME-induced charge separation mechanism
+#           =0: without CME-induced charge separation mechanism
 #           =1: with CME-induced charge separation mechanism
 #       24: the virtuality cut ('tl0' in program) in the time-like radiation in 
 #           parton rescattering
@@ -842,29 +842,29 @@ echo
 #       27: largest momentum allowed for produced particle
 #       28: concerned to the largest position allowed for produced particle
 #       29: =0, Lund string fragmentation function is used in coalescence model
-#           =1, Field-Feymman fragmentation function is used in coalescence model
+#           =1, Field-Feymman fragmentation function.
 #       30: =0, without more requirements
-#           =1, distributes the participant nucleons in overlapping areas forcely
-#       31: parj(1) in PYTHIA 
-#       32: parj(2) in PYTHIA 
-#       33: parj(3) in PYTHIA 
-#       34: parj(21) in PYTHIA 
+#           =1, distributes the participant nucleons in overlapping region forcely
+#       31: parj(1) in PYTHIA
+#       32: parj(2) in PYTHIA
+#       33: parj(3) in PYTHIA
+#       34: parj(21) in PYTHIA
 #       35: mstp(91) in PYTHIA, parton transverse momentum ($k_{\perp}$) 
 #           distribution inside hadron
 #           =1: Gaussian
 #           =2: exponential
 #       36: with or without phenomenological parton energy loss in parton 
 #           rescattering
-#           =0, without 
-#           =1, with 
+#           =0, without
+#           =1, with
 #       37: the coefficient in phenomenological parton energy loss
 #       38: $p_T$ cut in phenomenological parton energy loss
 #       39: width of Gaussian parton k_perp distribution in hadron if mstp(91)=1
 #           width of exponential k_{\perp} distribution in hadron if mstp(91)=2
-#       40: optional event stopping point 
+#       40: optional event stopping point
 #          =1, after parton initiation,
 #          =2, after parton rescattering,
-#          =4, after hadron rescattering 
+#          =4, after hadron rescattering
 #
 # kjp22,kjp23,kjp24,parp78,mstptj
 #  kjp22: =1, variable single string tension and parj(1) etc.

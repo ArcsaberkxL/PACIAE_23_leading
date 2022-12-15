@@ -242,10 +242,44 @@ c191110
         do i=1,nap
 c050322 c17(i,1)=c17(i,1)+bp
         c17(i,1)=c17(i,1)+0.5*bp ! 050322 move x-component of origin to 0.5*bp
+!Lei20221215B--
+! Calculates eccentricity correctly for both adj(29)=0 and 1.
+        x = c17(i,1)
+        y = c17(i,2)
+        z = c17(i,3)
+! Relative distance between the projectile nucleon i and the target center (-bp/2., 0, 0)
+        rel_dist = SQRT( (x+bp/2.)**2 + y**2 + z**2 )
+! The projectile nucleon i is inside the target, i.e. inside the overlap region.
+        if( rel_dist .le. r0t )then
+            sumx  = sumx  + x
+            sumy  = sumy  + y
+            sumxy = sumxy + x*y
+            sumx2 = sumx2 + x**2
+            sumy2 = sumy2 + y**2
+            sump  = sump  + 1.
+        end if
+!Lei20221215E--
         enddo
 c050322
         do i=nap+1,nap+nat
         c17(i,1)=c17(i,1)-0.5*bp
+!Lei20221215B--
+! Calculates eccentricity correctly for both adj(29)=0 and 1.
+        x = c17(i,1)
+        y = c17(i,2)
+        z = c17(i,3)
+! Relative distance between the target nucleon i and the projectile center (+bp/2., 0, 0)
+        rel_dist = SQRT( (x-bp/2.)**2 + y**2 + z**2 )
+! The target nucleon i is inside the projectile, i.e. inside the overlap region.
+        if( rel_dist .le. r0p )then
+            sumx  = sumx  + x
+            sumy  = sumy  + y
+            sumxy = sumxy + x*y
+            sumx2 = sumx2 + x**2
+            sumy2 = sumy2 + y**2
+            sump  = sump  + 1.
+        end if
+!Lei20221215E--
         enddo
 c050322        
 c191110
@@ -971,9 +1005,9 @@ c        y=1.-2.*pyr(1)
 c        z=1.-2.*pyr(1)
 c        rr=x*x+y*y+z*z
 c101014        if(rr.gt.1) goto 54
-	if(jj.eq.0)then   ! ii in target (origin)
+	if(jj.eq.0)then   ! ii in target (-b/2.)
 c101014	x=x*r0t
-	y=y*r0t
+c	y=y*r0t
 c101014	z=z*r0t
 c101014
 c       sample a point according to woodsax distribution
@@ -990,15 +1024,16 @@ c101014        c17(ii,1)=x
 c        c17(ii,2)=y
 c101014        c17(ii,3)=z
 c270312
-        sumx=sumx+x
-        sumy=sumy+y
-        sumxy=sumxy+x*y   ! 131212
-        sumx2=sumx2+x*x
-        sumy2=sumy2+y*y
-        sump=sump+1.
+!Lei20221215 They are done in parini now for both adj(29)=0 and 1.
+!Lei20221215        sumx=sumx+x
+!Lei20221215        sumy=sumy+y
+!Lei20221215        sumxy=sumxy+x*y   ! 131212
+!Lei20221215        sumx2=sumx2+x*x
+!Lei20221215        sumy2=sumy2+y*y
+!Lei20221215        sump=sump+1.
 c270312
 	endif
-	if(jj.eq.1)then   ! ii in projectile
+	if(jj.eq.1)then   ! ii in projectile (+b/2.)
 c101014	x=x*r0p
 c	y=y*r0p
 c101014	z=z*r0p
@@ -1017,13 +1052,14 @@ c101014	c17(ii,1)=x
 c	 c17(ii,2)=y
 c101014        c17(ii,3)=z
 c270312
-	xb=x+b   ! 101014 chen
-        sumx=sumx+xb   ! 101014
-        sumy=sumy+y
-        sumxy=sumxy+xb*y   ! 131212 101014
-        sumx2=sumx2+xb*xb   ! 101014
-        sumy2=sumy2+y*y
-        sump=sump+1.
+!Lei20221215 They are done in parini now for both adj(29)=0 and 1.
+!Lei20221215	xb=x+b   ! 101014 chen
+!Lei20221215        sumx=sumx+xb   ! 101014
+!Lei20221215        sumy=sumy+y
+!Lei20221215        sumxy=sumxy+xb*y   ! 131212 101014
+!Lei20221215        sumx2=sumx2+xb*xb   ! 101014
+!Lei20221215        sumy2=sumy2+y*y
+!Lei20221215        sump=sump+1.
 c270312
 	endif
 55	return
@@ -1077,7 +1113,7 @@ c        distribution
         z=c17(ii,3)
         if(iway.eq.0)goto 200   ! 230311
 c	ii must be outside overlap region of colliding nuclei
-        if(jj.eq.0)then   ! ii in target (origin)
+        if(jj.eq.0)then   ! ii in target (-b/2.)
 c       relative to projectile center, above x, y, and z are b-x, y, and z, 
 c	 respectively
 c       (b-x,y,z) is inside or not inside the sphere of projectile
@@ -1087,7 +1123,7 @@ c        c17(ii,1)=x
 c        c17(ii,2)=y
 c        c17(ii,3)=z
         endif
-        if(jj.eq.1)then   ! ii in projectile
+        if(jj.eq.1)then   ! ii in projectile (+b/2.)
 c       relative to target center, they are x+b, y, and z, respectively
 c       (x+b,y,z) is inside or not inside the sphere of target
         r1=sqrt((x+b)*(x+b)+y*y+z*z)
@@ -2132,7 +2168,6 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       character name_a*16, name_b*16, name_frame*16, name_x*16
 
-! Swithes off/on (0/1) the fragmentation.
       mstp(111)=mstptj   ! =0 230722
 ! Gets name of particles a and b.
       call pyname(kf_a,name_a)

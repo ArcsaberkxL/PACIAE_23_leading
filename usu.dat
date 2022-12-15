@@ -1,6 +1,6 @@
 10,1,1   !10000,1000,1          ! neve,nout,nosc                  
 197,79,197,79   ! 208,82,208,82 1,1,1,1 nap,nzp,nat,nzt                 
-0.00001,0.01,8.24,9.23,10      ! ddt,dtt,bmin,bmax,nmax          
+0.00001,0.01,0.00,3.45,10      ! ddt,dtt,bmin,bmax,nmax          
 1,1,1.2,200.,1                ! kjp21,ifram,para7,para10,kjp20  
 3.1416,1,1                    ! pio,ipden,itden                 
 20,5,2                        ! ispmax,isdmax,iflmax            
@@ -53,9 +53,9 @@
 40.,40.,25,10.          ! para1_1,para1_2,para2,para4       
 0.5,.6,2.,.05,.35,20    ! tdh,cptl,cptu,cptl2,cptu2,itnum   
 1,7,0,2,3,2              ! mstu21,mstj1_1,mstj1_2,mstj2,mstj3,itorw
-1.,0.47,0.4000,1000,0,0.30,0.58,4,1.9,1.0         ! adj1(1)- adj1(10)  
-0.10,0,26,18,1.000,1,80.,0,0.03,1               ! adj1(11)- adj1(20) 
-0,4.1,1,0.15,0.4,0,800000.,1.0,0,0      ! adj1(21)- adj1(30) 
+1.,0.47,0.4000,1000,0,0.30,0.10,4,1.9,5.6         ! adj1(1)- adj1(10)  
+0.10,1,26,18,1.000,1,20.,0,0.03,1               ! adj1(11)- adj1(20) 
+0,4.1,1,0.15,0.4,0,800000.,1.0,1,0      ! adj1(21)- adj1(30) 
 0.1,0.3,0.40,0.36,1.0,0.0,100.0,3.0,2.00,4.0    ! adj1(31)- adj1(40) 
 4,2,2,0.000,0                       ! kjp22,kjp23,kjp24,parp78,mstptj 
 0.,0,0.1,0.05,1.,0.2,0.05      ! parecc,iparres,smadel,dparj4,cp0,cr0,seco
@@ -231,9 +231,8 @@ adj1(i), i=1,40: switches and/or parameters
           Monte Carlo coalescence model.
       17: the threshold energy in the deexcitation of energetic quark in 
           the Monte Carlo coalescence model.
-      18: with or without Pauli blocking in the parton cascade
-          =0, without Pauli blocking
-          =1, with Pauli blocking.
+      18: =0, rest partons hadronize by string fragmentation
+          =1, rest partons hadronize by coalescence
       19: time accuracy used in the parton cascade 
       20: the optional parton-parton cross section in the parton rescattering
           =0, LO pQCD parton-parton cross section 
@@ -259,8 +258,8 @@ adj1(i), i=1,40: switches and/or parameters
       28: concerned to the largest position allowed for produced particle
       29: =1，Field-Feymman fragmentation function is used in coalescence model 
           =0，Lund string fragmentation function is used in coalescence model
-      30: =0, without more requirements
-          =1, distributes the participant nucleons in overlapping region forcely
+      30: =1, distribute the participant nucleons in overlapping region forcely
+	  =0, without more requirements
       31: parj(1) in PYTHIA 
       32: parj(2) in PYTHIA 
       33: parj(3) in PYTHIA 
@@ -293,8 +292,12 @@ kjp22,kjp23,kjp24,parp78,mstptj
         =1, sharp sphere
         =2, Woods-Saxon
  parp78: parameter controling amount of colour reconnection in final state
- mstptj: input value of mstp(111) (mstj(1)) for pp, pA (AP), and AA  
-         (for e+e-)
+ mstptj: =0, input mstp(111) (mstj(1)) for pp, pA (AP), and AA (for e+e-) in
+             PACIAE simulation devaloped from partonic initial stage, 
+             to partonic rescattering, hadronization, and to hadronic
+             rescttering stage  
+         =1, PYTHIA like simulation without partonic & hadronic 
+             rescatterings but with setting of kjp21=0
   
 parecc,iparres,smadel,dparj4,cp0,cr0,seco
  parecc: proportional factor between initial spatial space eccentricity and final 

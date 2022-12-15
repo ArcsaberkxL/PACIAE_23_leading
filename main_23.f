@@ -119,10 +119,10 @@ c	3: parameter (\mu)^2 ('tcut' in program): to avoid divergence in
 c        calculating parton-parton differential cross section in parcas_23.f 
 c	4: parameter idw, # of integration intervals in parcas_23.
 c	5: =0, w/o nuclear shadowing, 
-c      =1, Wang's nuclear shadowing (PLB 527(2002)85).
+c          =1, Wang's nuclear shadowing (PLB 527(2002)85).
 c	6: parameter 'a', i.e. parj(41), in Lund and/or Field-Feynman 
-c        string fragmentation function
-c	7: parameter 'b', i.e. parj(42), in Lund string fragmentation function
+c          string fragmentation function
+c       7: parameter 'b', i.e. parj(42), in Lund string fragmentation function
 c       8: i.e. mstp(82) in PYTHIA64
 c       9: i.e. parp(81) (D=1.9 GeV/c), effective minimum transverse momentum  
 c	   of multiple interactions if mstp(82)=1                      
@@ -151,7 +151,7 @@ c          =1: CME on
 c       24: =tl0,the virtuality cut in time-like radiation in parcas_23.f, 
 c            4*tl0 is assumed
 c	25: \Lambda_QCD in parcas_23.f
-c	26: selection of random number seed,                           !Lei20221017
+c	26: selection of random number seed,                       !Lei20221017
 c       =0, default PYTHIA seed (19780503), can be used for debug. !Lei20221017
 c       =other, seed from the real-time colock                     !Lei20221017
 c       27: largest momentum allowed for particle ('dpmax')
@@ -160,8 +160,8 @@ c           which is 1 in usu.dat and is recalculated in the running)
 c081222 29: sumpling daughter energy fraction z taking from mother in 'funcz'  
 c          =0: by Lund string fragmentation function
 c          =1: by Field-Feynmman fragmentation function
-c	30: =0, without more requirements   !Lei20221211
-c       =1, distributes the participant nucleons in overlapping areas forcely
+c111222 30:=1: distributes participant nucleons in overlapping areas forcely 
+c          =0: no more requirements
 c	31: parj(1) in pythia64
 c	32: parj(2) in pythia64
 c	33: parj(3) in pythia64
@@ -480,11 +480,13 @@ c	mstj1_1: =6, with inelastic processes 4, 6, and 7 (parcas_23.f)
 c                =7, with inelastic process 7 only (parcas_23.f)
 c	mstj1_2: =0, w/o final state time-like parton shower if iparres=1
 c                =1, w/ final state time-like parton shower if iparres=1
-c230722 mstptj: input value of mstp(111) (mstj(1)) for pp, pA (Ap), and AA 
-c               (for e+e-)
-c       mstptj=0: simulation pass through partonic initial state, partonic
-c        rescattering, fragmentation, and hadronic rescttering states
-c       mstptj=1: PYTHIA-like simulation
+c230722 mstptj: =0,input mstp(111) (mstj(1)) for pp,pA(Ap),and AA (for e+e-)
+c121222          in PACIAE simulation devaloped from partonic initial stage, 
+c                to partonic rescattering, hadronization, and to hadronic 
+c                rescttering stage
+c       mstptj: =1: PYTHIA-like simulation without partonic & hadronic
+c121222           rescatterings but with setting of kjp21=0
+
 c       gluon jet fragmentation scheme in IF
 	mstj(2)=mstj2
 c	how the particles share the momentum in IF
@@ -1146,7 +1148,8 @@ c151021 endif
         if(itden.eq.0 .and. itorw.eq.1)call pyevnt  
         if(itden.eq.0 .and. itorw.eq.2)call pyevnw 
 c151021 
-        endif 
+        endif
+
         if(ipden.eq.2 .and. itden.eq.2)then
         mstj(1)=mstptj   ! 230722
         call pyeevt(0,win)   ! for e+e- 
@@ -1163,6 +1166,7 @@ c       give four position to the particles generated in pythia ('pyjets')
 c       write(22,*)'pp mstptj=',mstptj
 c       call pylist(1)
         goto 998   ! toward hadron rescattering ('call hadcas')
+c121222 at same time of setting mstptj=1 one should set kjp21=0        
         else   !! 230722
 c230722
 
@@ -1298,6 +1302,7 @@ c230722
 c       if(((ipden.eq.1.and.itden.eq.1).or.(ipden.eq.0.and.itden.eq.1)
 c       c   .or.(ipden.eq.1.and.itden.eq.0)).and.mstptj.eq.1)then
         if(mstptj.eq.1)then
+c121222 PYTHIA like simulation for pA (Ap) & AB                
 c       'sbh' to 'pyjets'
         n=nbh
         if(n.ge.1)then
@@ -2716,21 +2721,21 @@ c       user output
      c   snpctl0i,snpari   ! 180121 280722
         write(10,*)'largest ave. # of nn collision pairs =',snpctlmi ! 280722
 c140820
-        write(10,*)'ave. # of nn collision pairs calling pythia, not 
-     c   calling pythia=',eineli(592),eineli(593)
+        write(10,*)'ave. # of nn collision pairs calling pythia, not '//
+     c   'calling pythia=',eineli(592),eineli(593)
         write(10,*)'ave. # of wounded nucleons in parini.f =',swouni  
 c140820 
 
-	write(10,*)'colli. # suffered by projectile nucleon 
-     c	 in target nucleus',spathni   ! 140219
+	write(10,*)'colli. # suffered by projectile nucleon '//
+     c   'in target nucleus',spathni   ! 140219
 	write(10,*)'event averaged N_bin',sevbini   ! 260219
-        write(10,*)'event averaged energy of gamma after 
-     c   partonic initiation, partonic cascade, hadronization 
-     c   and end of event=',segam1o,segam2o,segam3o,segamo ! 080419
+        write(10,*)'event averaged energy of gamma after '//
+     c   'partonic initiation, partonic cascade, hadronization '//
+     c   'and end of event=',segam1o,segam2o,segam3o,segamo ! 080419
 
 c071103
-	write(10,*)'# of successful and blocked collision in parton 
-     c	 cascade=',rineli,reli,reli+rineli
+	write(10,*)'# of successful and blocked collision in parton '//
+     c   'cascade=',rineli,reli,reli+rineli
 c071103
 c220110
         write(10,*)'average collision # in parton cascade=',srea
@@ -2738,11 +2743,11 @@ c220110
         write(10,*)(snreac(i1),i1=1,9)
 c220110
 
-	write(10,*)'average frequency of the occurring of each inela. 
-     c   in hadron cascade='
+	write(10,*)'average frequency of the occurring of each inela. '//
+     c   'in hadron cascade='
 	write(10,*)dineli
 	write(10,*)'el. and inela. colli. # and sum in hadron cascade=',
-     c	 seli,sineli,seli+sineli
+     c   seli,sineli,seli+sineli
 
 c200601
 	write(10,*)'(Npart)mini-jet,Nnn,Npp=',skparo,sknno,skppo
@@ -2772,12 +2777,12 @@ c120119
 	write(10,*)'multiplicity of positive particles,partial=',dnchao
 	write(10,*)'multiplicity of positive particles,full=',dnchafo
 	write(10,*)'throw away ithroq,ithrob,ithroc=',
-     c	 wthroq,wthrob,wthroc/3.
+     c   wthroq,wthrob,wthroc/3.
 	write(10,*)'throe=',wthroe
 	write(10,*)'avb,avneu,astbp,astbt,aanbin=',
      c   avb,avneu,astbp,astbt,aanbin   ! 280113
-        write(10,*)'particle multiplicity=',(sbof(ll),ll=1,ispmax)
-	write(10,*)'particle multiplicity=',(sbo(ll),ll=1,ispmax)
+        write(10,*)'particle multiplicity,p=',(sbo(ll),ll=1,ispmax)
+        write(10,*)'particle multiplicity,f=',(sbof(ll),ll=1,ispmax)
 601	format(8(1x,f7.4))
 csa****************************************************************
 
