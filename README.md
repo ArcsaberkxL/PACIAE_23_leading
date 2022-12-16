@@ -49,7 +49,7 @@ There are two ways to run the program.
          ```
             nohup time ./PACIAE.sh | tee $(date "+%Y%m%d%H%M%S").log &
          ```
-    It is also worth mentioning that tasks can be submitted to computer clusters and supercomputers. (It is currently only available in SLRUM and LSF scheduling systems) More detailed information and usage please read the PACIAE.sh file.
+    It is also worth mentioning that tasks can be submitted to computer clusters and supercomputers using the PACIAE.sh script. (It is currently only available in SLRUM and LSF scheduling systems) More detailed information and usage please read the PACIAE.sh file.
 
 
 ## Maintainers
