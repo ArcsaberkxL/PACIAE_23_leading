@@ -243,7 +243,7 @@ c191110
 c050322 c17(i,1)=c17(i,1)+bp
         c17(i,1)=c17(i,1)+0.5*bp ! 050322 move x-component of origin to 0.5*bp
 !Lei20221215B--
-! Calculates eccentricity correctly for both adj(29)=0 and 1.
+! Calculates eccentricity correctly for both adj(30)=0 and 1.
         x = c17(i,1)
         y = c17(i,2)
         z = c17(i,3)
@@ -264,7 +264,7 @@ c050322
         do i=nap+1,nap+nat
         c17(i,1)=c17(i,1)-0.5*bp
 !Lei20221215B--
-! Calculates eccentricity correctly for both adj(29)=0 and 1.
+! Calculates eccentricity correctly for both adj(30)=0 and 1.
         x = c17(i,1)
         y = c17(i,2)
         z = c17(i,3)
@@ -1024,7 +1024,7 @@ c101014        c17(ii,1)=x
 c        c17(ii,2)=y
 c101014        c17(ii,3)=z
 c270312
-!Lei20221215 They are done in parini now for both adj(29)=0 and 1.
+!Lei20221215 They are done in parini now for both adj(30)=0 and 1.
 !Lei20221215        sumx=sumx+x
 !Lei20221215        sumy=sumy+y
 !Lei20221215        sumxy=sumxy+x*y   ! 131212
@@ -1052,7 +1052,7 @@ c101014	c17(ii,1)=x
 c	 c17(ii,2)=y
 c101014        c17(ii,3)=z
 c270312
-!Lei20221215 They are done in parini now for both adj(29)=0 and 1.
+!Lei20221215 They are done in parini now for both adj(30)=0 and 1.
 !Lei20221215	xb=x+b   ! 101014 chen
 !Lei20221215        sumx=sumx+xb   ! 101014
 !Lei20221215        sumy=sumy+y
