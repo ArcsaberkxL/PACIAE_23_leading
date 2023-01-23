@@ -53,7 +53,7 @@ RUN="RAW"            # Additional option. Not required to be modified usually.
 #   seed based on the real-time clock of the machine.                          #
 # This random number generator seed is set in PACIAE internal code (main.f).   #
 #                                                                              #
-# One need to note that it's just a pseudo-parallism. In other words, this     #
+# One needs to note that it's just a pseudo-parallism. In other words, this    #
 #   script just performs PACIAE running one-by-one automatically instead of    #
 #   manual runs. One also needs another program to aggregate and average all   #
 #   the results (in rms.out) after the whole PACIAE running finished.          #
@@ -67,7 +67,7 @@ RUN="RAW"            # Additional option. Not required to be modified usually.
 # How to use:                                                                  #
 #                                                                              #
 #   1. First and formost, give this script file "executable permission" by     #
-#       typing command "chmod +x PACIAE.sh". In addition, one need "make"      #
+#       typing command "chmod +x PACIAE.sh". In addition, one needs "make"     #
 #       tool. Install "make" using the command, for example on UBUNTU,         #
 #       "sudo apt install make".                                               #
 #                                                                              #
@@ -83,11 +83,11 @@ RUN="RAW"            # Additional option. Not required to be modified usually.
 #       More detailed setups can be modified in the closely following usu.dat  #
 #           directly. Search keywords "usu.dat" to find them.                  #
 #      2.3 On SLURM/LSF scheduling systems in the computing cluster and the    #
-#       sunper-computer. One need modify the additional statements of the      #
+#       sunper-computer. One needs modify the additional statements of the     #
 #       settings at the beginning of file. (SBATCH, APP_NAME...)               #
 #                                                                              #
 #   3. Execution.                                                              #
-#       3.1 On normal LINUX,  type command "./PACIAE.sh" to run this script.   #
+#       3.1 On normal LINUX, typing command "./PACIAE.sh" to run this script.  #
 #           The more recommended command is                                    #
 #           "time ./PACIAE.sh | tee $(date "+%Y%m%d%H%M%S").log", which        #
 #                  stores the screen information to a log file.                #
