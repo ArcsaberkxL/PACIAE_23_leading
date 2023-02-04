@@ -98,17 +98,27 @@ Feel free to dive in! Any bug reports, comments and suggestions are welcome. Ple
 <!----------------------------------------------------------------------------->
 ...(waiting for updating)
 
+<!----------------------------------------------------------------------------->
+02/2023 In version PACIAE2.3
+
+<!----------------------------------------------------------------------------->
+01/2023 In version PACIAE2.3
+
+- In main_23.f and parini_23.f, the low-energy simulation was introduced by Ben-hao.
+
+
+<!----------------------------------------------------------------------------->
 12/2022 In version PACIAE2.3
 
-- In subroutine "main" in "main_23.f", the real-time clock randonm seed is introduced.
-- In subroutine "scat" in the "parini_23.f", the long-written statement about executing the binary collision by calling PYEVNW / PYEVNT is replaced by a new subroutine "xevent".
-- In main_23.f<!-- , eps09.f -->, the statements with old sytanx are re-wrote by more modern-style one.
-- The CME is introduced in PACIAE2.3 based on Zhi-Lei's improvement in PACIAE2.2.1b and PACIAE2.2.1c.
+- In subroutine "main" in "main_23.f", the real-time clock randonm seed was introduced.
+- In subroutine "scat" in the "parini_23.f", the long-written statement about executing the binary collision by calling PYEVNW / PYEVNT was replaced by a new subroutine "xevent".
+- In main_23.f<!-- , eps09.f -->, the statements with old sytanx were re-wrote by more modern-style one.
+- The CME was introduced in PACIAE2.3 based on Zhi-Lei's improvement in PACIAE2.2.1b and PACIAE2.2.1c.
 
 <!----------------------------------------------------------------------------->
 04/2021 In version PACIAE2.2.1b and PACIAE2.2.1c
 
-- The CME is introduced by Zhi-Lei She et al.
+- The CME was introduced by Zhi-Lei She et al.
 
 <!-----------------------------------------------------------------------------
 01/2020 In version PACIAE2.3
