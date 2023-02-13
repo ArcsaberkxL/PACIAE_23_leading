@@ -1,34 +1,34 @@
-	subroutine parcas(time_par,jjj,iijk,win,nap,rnt,rnp) 
+        subroutine parcas(time_par,jjj,iijk,win,nap,rnt,rnp) 
 c       deals with parton cascade (partonic rescattering)
-c	writen by Ben-Hao Sa at 19/11/2002 
-c	input messages are in 'pyjets'   ! 051122 
-c	working block is 'pyjets'   ! 051122
+c       writen by Ben-Hao Sa at 19/11/2002 
+c       input messages are in 'pyjets'   ! 051122 
+c       working block is 'pyjets'   ! 051122
 c       output messages are in 'pyjets'   ! 051122
 c160110 iiii: number of run
 c       jjj: jjj-th loop interaction in a event   ! 180520
-	parameter (kszj=80000,msca=20000,mclis=280000)   ! 051122
-	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
-	IMPLICIT INTEGER(I-N)
-	INTEGER PYK,PYCHGE,PYCOMP
+        IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+        IMPLICIT INTEGER(I-N)
+        INTEGER PYK,PYCHGE,PYCOMP
+        parameter (kszj=80000,msca=20000,mclis=280000)   ! 051122
         COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 051122
-	COMMON/PYDAT1/MSTU(200),PARU(200),MSTJ(200),PARJ(200)  ! 240503
-	common/sa1/kjp21,non1,bp,iiii,neve,nout,nosc
-	common/sa12/ppsa(5),nchan,nsjp,sjp,ttaup,taujp   ! 120505
+        COMMON/PYDAT1/MSTU(200),PARU(200),MSTJ(200),PARJ(200)  ! 240503
+        common/sa1/kjp21,non1,bp,iiii,neve,nout,nosc
+        common/sa12/ppsa(5),nchan,nsjp,sjp,ttaup,taujp   ! 120505
         common/sa24/adj1(40),nnstop,non24,zstop
         common/sa33/smadel,ecce,secce,parecc,iparres   ! 080520
-	common/collist/lc(2,mclis),tc(2,mclis),icol
-	common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
-	common/work7/reac(9),crose(9)
+        common/collist/lc(2,mclis),tc(2,mclis),icol
+        common/scatt/pi(4),pj(4),ic,jc,n0   ! 051122
+        common/work7/reac(9),crose(9)
         common/papr_p/core,xs,xu,xxt,sm,as,dta,xa,sl0,tl0,qa,
-     c  ea,sqq,sqg,sgg,pa(3),pip(6,msca),mtime,kfk,nsca,kpip(msca)
-	common/sa6_p/ithroq_p,ithrob_p,ich_p,non6_p,throe_p(4)   ! 201104
+     c   ea,sqq,sqg,sgg,pa(3),pip(6,msca),mtime,kfk,nsca,kpip(msca)
+        common/sa6_p/ithroq_p,ithrob_p,ich_p,non6_p,throe_p(4)   ! 201104
 c       icol : current total number of collision pairs in collision time list
 c       lc   : line number (in [1,n]) of colliding pair, eg.
-c	lc(1,100): line number of first particle of 100-th colliding pair
+c       lc(1,100): line number of first particle of 100-th colliding pair
 c       tc   : the collision time of colliding pair
 c       ic,jc: line number of colliding particles
 c       n0: the n before current collision
-c	pi,pj: four momentum of colliding particles 
+c       pi,pj: four momentum of colliding particles 
 c       ithroq_p : total # of quarks thrown away
 c       ithrob_p : total # of antiquarks thrown away
 c       throe_p : total momentum and energy of the partons thrown away
@@ -36,18 +36,18 @@ c       ichh_p : total charge of the partons thrown away
         dimension rpo(kszj,4),ppo(kszj,4)    ! 051122
 c051122 rpo,ppo: parton four coordinate before Neuton motion, four momentum 
 c051122  before energy loss        
-c151203	iijk=0   ! 120603
-	tl0=adj1(24)
+c151203 iijk=0   ! 120603
+        tl0=adj1(24)
 c       tl0: cut off virtuality of time-like branching, i. e. Mu0**2
-	if(adj1(1).eq.0.)return   ! 290505
+        if(adj1(1).eq.0.)return   ! 290505
         time=time_par   ! 280910
 c241104
-	dpmax=adj1(27)
-	drmax=adj1(28)
+        dpmax=adj1(27)
+        drmax=adj1(28)
 c241104
-	adj112=adj1(12)
-	adj136=adj1(36)   ! 120505
-	adj137=adj1(37)   ! 120505
+        adj112=adj1(12)
+        adj136=adj1(36)   ! 120505
+        adj137=adj1(37)   ! 120505
       call reset_eve
 c201104
         ithroq_p=0
@@ -56,135 +56,135 @@ c201104
         do i=1,4
         throe_p(i)=0.
         enddo
-	do i1=1,n   ! 051122
-	v(i1,4)=0.
-	enddo
+        do i1=1,n   ! 051122
+        v(i1,4)=0.
+        enddo
 c241104
-c	step 1
+c       step 1
 c       create the parton-parton (initial) collision time list 
-	call ctlcre_par(iijk)   ! 290803 
-	if(iijk.eq.2)return   ! initial collis. list is empty 151203
+        call ctlcre_par(iijk)   ! 290803 
+        if(iijk.eq.2)return   ! initial collis. list is empty 151203
 c290803
-c151203	if(iijk.eq.1)then
-c151203	iiii=iiii-1
-c151203	return
-c151203	endif
+c151203 if(iijk.eq.1)then
+c151203 iiii=iiii-1
+c151203 return
+c151203 endif
 c290803
 
 c160110 the loop over parton-parton collisions within an event
-	jjj=0   
-	icolo=icol   ! 120603
-c	statistic of the number of loops in parton cascade within an event
+        jjj=0   
+        icolo=icol   ! 120603
+c       statistic of the number of loops in parton cascade within an event
 24      jjj=jjj+1   ! 160110   
 c---------------------------------------------------------------------
-	if(jjj.gt.100*icolo)then
-	write(9,*)'infinite loop may have happened in'
+        if(jjj.gt.100*icolo)then
+        write(9,*)'infinite loop may have happened in'
         write(9,*)'parcas iiii,jjj,icolo=',iiii,jjj,icolo
-	iiii=iiii-1
-	iijk=1
-	return
-	endif
-	n0=n   ! 051122
+        iiii=iiii-1
+        iijk=1
+        return
+        endif
+        n0=n   ! 051122
 
-c	step 2
+c       step 2
 c       find out the binary collision (icp) with the minimum colli. time
 c       the collision time list is empty if icp=0
-	call find_par(icp,tcp)
-	if(icp.eq.0)goto 25 ! colli. list, empty
-	ic=lc(1,icp)
-	jc=lc(2,icp)
+        call find_par(icp,tcp)
+        if(icp.eq.0)goto 25 ! colli. list, empty
+        ic=lc(1,icp)
+        jc=lc(2,icp)
 c131104
 c080520 parton rescattering is assumed no longer than 10000 fm/c
-	if(tcp.le.10000.)goto 27
-	do i1=icp+1,icol
-	lc(1,i1-1)=lc(1,i1)
-	lc(2,i1-1)=lc(2,i1)
-	tc(1,i1-1)=tc(1,i1)
+        if(tcp.le.10000.)goto 27
+        do i1=icp+1,icol
+        lc(1,i1-1)=lc(1,i1)
+        lc(2,i1-1)=lc(2,i1)
+        tc(1,i1-1)=tc(1,i1)
         tc(2,i1-1)=tc(2,i1)
-	enddo
-	icol=icol-1
-	jjj=jjj-1
-	goto 24
-27	continue
-	time=tcp
+        enddo
+        icol=icol-1
+        jjj=jjj-1
+        goto 24
+27      continue
+        time=tcp
 
-c	step 3
+c       step 3
 c       perform classical Neuton motion for ic & jc partons
-	do i=1,n   ! 051122
-	do j=1,3
+        do i=1,n   ! 051122
+        do j=1,3
         rpo(i,j)=v(i,j)
         vpij=p(i,j)/p(i,4)
-	v(i,j)=v(i,j)+vpij*(tcp-v(i,4))
-	enddo
+        v(i,j)=v(i,j)+vpij*(tcp-v(i,4))
+        enddo
         rpo(i,4)=v(i,4)
-	v(i,4)=tcp
-	enddo
+        v(i,4)=tcp
+        enddo
 c120603
-c	consider parton energy loss phenomenologically
+c       consider parton energy loss phenomenologically
 c120505
-	if(adj136.eq.1)then
-	bmax=rnt+rnp
-	bmax2=bmax*bmax
-	bp2=bp*bp
-c	energy loss per unit distance
-	dell=adj137*(nap/197.)**0.75*(1.-bp2/bmax2)
-     c	 *(win*win/40000)**0.25
-c	write(9,*)'adj136,adj137,win=',adj136,adj137,win   ! sa
-c	write(9,*)'nap,rnt,rnp,dell=',nap,rnt,rnp,dell   ! sa
-	call eloss(dell,rpo,ppo)  
-	endif 
+        if(adj136.eq.1)then
+        bmax=rnt+rnp
+        bmax2=bmax*bmax
+        bp2=bp*bp
+c       energy loss per unit distance
+        dell=adj137*(nap/197.)**0.75*(1.-bp2/bmax2)
+     c   *(win*win/40000)**0.25
+c       write(9,*)'adj136,adj137,win=',adj136,adj137,win   ! sa
+c       write(9,*)'nap,rnt,rnp,dell=',nap,rnt,rnp,dell   ! sa
+        call eloss(dell,rpo,ppo)  
+        endif 
 c120505
-c	step 4
+c       step 4
 c       performs parton-parton collision & updates particle list 
 c       if lmn=4,6,& 7 updates,'pyjets','sbe',diquark list,string 
 c        list, & lc(1-2,m) either 
-	kkk=0   ! 120603
-	iway=0   ! 120505
-	call collis(ic,jc,kf3,kf4,tcp,jjj,kkk,iway,icnew,jcnew   
+        kkk=0   ! 120603
+        iway=0   ! 120505
+        call collis(ic,jc,kf3,kf4,tcp,jjj,kkk,iway,icnew,jcnew   
      c   ,lmn,time)   ! 120603 120505 160110
 c120603
 c120603
 503     format(5(1x,e12.3))
  
-c	step 5
+c       step 5
 
 c060620 update collision list
         if(lmn.eq.4.or.lmn.eq.6.or.lmn.eq.7)goto 26 ! 070720
 c       in above case 'update collision list' is executed in "collis'    
         call update_ctl(ic,jc,kf3,kf4,iparres,lmn,iway,tcp)   
 
-c	'new' method
-c1	if(adj136.eq.0)call update_ctl(tcp,iway)   
-c1	if(adj136.eq.1 .and.iway.eq.1)call update_ctl(tcp,iway)
-c	if collision does not happen remove the collision pairs (one of
-c	 company is colliding particle) from collision time list only
+c       'new' method
+c1      if(adj136.eq.0)call update_ctl(tcp,iway)   
+c1      if(adj136.eq.1 .and.iway.eq.1)call update_ctl(tcp,iway)
+c       if collision does not happen remove the collision pairs (one of
+c        company is colliding particle) from collision time list only
 c1      if(adj136.eq.1 .and.iway.eq.0)then
-c	create collision time list completely
-c1	icol=0
-c1	do i=1,mclis
-c1	lc(1,i)=0
-c1	lc(2,i)=0
-c1	tc(1,i)=0.
-c1	tc(2,i)=0.
-c1	enddo
-c1	call ctlcre_para(iijk,time)
-c1	endif   
+c       create collision time list completely
+c1      icol=0
+c1      do i=1,mclis
+c1      lc(1,i)=0
+c1      lc(2,i)=0
+c1      tc(1,i)=0.
+c1      tc(2,i)=0.
+c1      enddo
+c1      call ctlcre_para(iijk,time)
+c1      endif   
 c120505
-c	goto 25   ! it is actived temporally
-26	continue   ! 120603
-	goto 24   ! the loop over collisions within an event
+c       goto 25   ! it is actived temporally
+26      continue   ! 120603
+        goto 24   ! the loop over collisions within an event
 25      continue
-	time_par=time
+        time_par=time
 c       time_par: is the time lasted in parton cascade hereafter
 c       write(9,*)'af parton cascade time=',time   ! sa
 c250803
-	do i=1,9
-	reaci=reac(i)
-	if(reaci.gt.0.)crose(i)=crose(i)/reaci
-	enddo
+        do i=1,9
+        reaci=reac(i)
+        if(reaci.gt.0.)crose(i)=crose(i)/reaci
+        enddo
 c250803
-	return
-	end
+        return
+        end
 
 
 
@@ -955,9 +955,10 @@ c       sum of momentum and energy
 c       pei: two dimension array for input momentum and energy
 c       il and ih: lower and higher limits of sum
 c       peo: one dimension array of output momentum,energy & sqrt(s)
-	IMPLICIT DOUBLE PRECISION(A-H, O-Z)
-	IMPLICIT INTEGER(I-N)
-	INTEGER PYK,PYCHGE,PYCOMP
+        IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+        IMPLICIT INTEGER(I-N)
+        INTEGER PYK,PYCHGE,PYCOMP
+        PARAMETER (MPLIS=80000)   ! 030223 Yong & She
         dimension pei(mplis,5),peo(5)
         do i=1,5
         peo(i)=0.

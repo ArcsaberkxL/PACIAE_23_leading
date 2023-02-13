@@ -1,8 +1,8 @@
-	subroutine hadcas(ijk,neve,nout,time_had,ijkk)
+        subroutine hadcas(ijk,neve,nout,time_had,ijkk)
 c       deals with the hadronic rescattering, 
 c        composed by Ben-Hao Sa, 20/09/2000
-c	input message is in 'sa1_h', which plays wooking block as well
-c	output message is in 'sa1_h'
+c       input message is in 'sa1_h', which plays wooking block as well
+c       output message is in 'sa1_h'
 c       ijk: the event number
 c       neve: total number of events
 c       nout: a internal output per nout events
@@ -10,19 +10,19 @@ c060112 if ijkk=1 give up current event avoiding infinite loop
         IMPLICIT DOUBLE PRECISION(A-H, O-Z)
         IMPLICIT INTEGER(I-N)
         INTEGER PYK,PYCHGE,PYCOMP
-	parameter(kszj=80000,nsize=750000)
+        PARAMETER(KSZJ=80000,NSIZE=750000)
         common/sa1_h/nsa,non1,ksa(kszj,5),psa(kszj,5),vsa(kszj,5)
-	common/sa8_h/tau(kszj),ishp(kszj)
+        common/sa8_h/tau(kszj),ishp(kszj)
         common/sa9_h/kfmax,kfaco(100),numb(100),non9,disbe(100,100)
         common/sa10_h/csnn,cspin,cskn,cspipi,cspsn,cspsm,rcsit,ifram,
-     &  iabsb,iabsm,non10,csspn,csspm
-	common/sa19_h/coor(3)
+     &   iabsb,iabsm,non10,csspn,csspm
+        common/sa19_h/coor(3)
         common/sa20_h/t0,sig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
-     c  ,rnt,rnp,ecsspn,ecsspm
+     c   ,rnt,rnp,ecsspn,ecsspm
         common/count_h/isinel(600)
         common/ctllist_h/nctl,noinel(600),nctl0,noel   
         common/syspar_h/pio
-	common/sa24/adj1(40),nnstop,non24,zstop   ! 231104
+        common/sa24/adj1(40),nnstop,non24,zstop   ! 231104
         common/sa25/mstj1_1,mstj1_2,para1_1,para1_2   ! 221203 250204
         common/pycidat2/kfmaxt,nont2,param(20),weigh(600)   ! 250204
 c       ifram = 0 for fixed target, = 1 for collider 
@@ -52,7 +52,7 @@ c       0.5 is hard core distance between two nucleons
 c       0. is hard core distance between pion and nucleon
 c!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c       tau(i) : formation time of particle i.
-c	ishp(i)=1 if i-th particle inside the simulated volume
+c       ishp(i)=1 if i-th particle inside the simulated volume
 c              =0 if i-th particle outside the simulated volume
 c       isinel(i) = 0 without i-th inelastic process
 c                 = 1 with i-th inelastic process
@@ -71,22 +71,22 @@ c       noinel(i): statistics of the occurring of i-th inelastic process
 c       noel: statistics of the occurring of elastic process
         dimension lc(nsize,5),tc(nsize),tw(nsize)
         dimension peo(4)
-	time=time_had   ! recovered on 280910
-	param(1)=para1_2   ! 250204
-	pio=3.1416
-	iabsb=0
-	iabsm=0
+        time=time_had   ! recovered on 280910
+        param(1)=para1_2   ! 250204
+        pio=3.1416
+        iabsb=0
+        iabsm=0
 c       iabsb = 0 : without J/Psi (Psi') + baryon
 c             = 1 : with J/Psi (Psi') + baryon
 c       iabsm = 0 : without J/Psi (Psi') + meson
 c             = 1 : with J/Psi (Psi') + meson
 
-c280910	if(ijk.eq.1)then
+c280910 if(ijk.eq.1)then
 c       give initial value to quantities needed in hardon rescattering
-	call sysini_h   ! it has been called in main.f
-c280910	endif
+        call sysini_h   ! it has been called in main.f
+c280910 endif
 
-c	initiation
+c       initiation
         nctl=0
         do i=1,nsize
         do j=1,5
@@ -98,52 +98,52 @@ c	initiation
         do i=1,100
         numb(i)=0
         enddo
-	do i=1,kszj
-	vsa(i,4)=0.   ! 231104
-	tau(i)=0.
-	enddo
+        do i=1,kszj
+        vsa(i,4)=0.   ! 231104
+        tau(i)=0.
+        enddo
 c231104
-	dpmax=adj1(27)
-	drmax=adj1(28)
-	do i1=1,nsa
-	pnn1=psa(i1,1)
-	pnn2=psa(i1,2)
-	pnn3=psa(i1,3)
-	pnn4=psa(i1,4)
-	rnn1=vsa(i1,1)
-	rnn2=vsa(i1,2)
-	rnn3=vsa(i1,3)
-	pnnm=pnn1*pnn1+pnn2*pnn2+pnn3*pnn3
-	if(pnnm.lt.1.e-28)pnnm=1.e-28
-	if(pnnm.gt.1.e28)then
-	ishp(i1)=0
-	goto 200
-	endif
-	pnnm=sqrt(pnnm)
-	rnnm=rnn1*rnn1+rnn2*rnn2+rnn3*rnn3
-	if(rnnm.lt.1.e-28)rnnm=1.e-28
-	if(rnnm.gt.1.e28)then
+        dpmax=adj1(27)
+        drmax=adj1(28)
+        do i1=1,nsa
+        pnn1=psa(i1,1)
+        pnn2=psa(i1,2)
+        pnn3=psa(i1,3)
+        pnn4=psa(i1,4)
+        rnn1=vsa(i1,1)
+        rnn2=vsa(i1,2)
+        rnn3=vsa(i1,3)
+        pnnm=pnn1*pnn1+pnn2*pnn2+pnn3*pnn3
+        if(pnnm.lt.1.e-28)pnnm=1.e-28
+        if(pnnm.gt.1.e28)then
         ishp(i1)=0
         goto 200
         endif
-	rnnm=sqrt(rnnm)
-	if((pnnm.le.dpmax.and.pnn4.le.dpmax).and.rnnm.le.drmax)then
-	ishp(i1)=1
-	else
-	ishp(i1)=0
-	endif
-200	enddo
-	do i1=nsa+1,kszj
-	ishp(i1)=0
-	enddo
-c231104	
-	noel=0
-	do i=1,600
-	noinel(i)=0
-	enddo
+        pnnm=sqrt(pnnm)
+        rnnm=rnn1*rnn1+rnn2*rnn2+rnn3*rnn3
+        if(rnnm.lt.1.e-28)rnnm=1.e-28
+        if(rnnm.gt.1.e28)then
+        ishp(i1)=0
+        goto 200
+        endif
+        rnnm=sqrt(rnnm)
+        if((pnnm.le.dpmax.and.pnn4.le.dpmax).and.rnnm.le.drmax)then
+        ishp(i1)=1
+        else
+        ishp(i1)=0
+        endif
+200     enddo
+        do i1=nsa+1,kszj
+        ishp(i1)=0
+        enddo
+c231104
+        noel=0
+        do i=1,600
+        noinel(i)=0
+        enddo
 
 c       change K0S, K0L to K0, K0ba
-	do j=1,nsa
+        do j=1,nsa
         kf=ksa(j,2)
         if(kf.eq.130 .or. kf.eq.310)then
         rrlu=pyr(1)
@@ -154,13 +154,13 @@ c       change K0S, K0L to K0, K0ba
 
 c       filter out particles wanted to study and make in order of proton, 
 c        neutron, ...
-c	initial particle list is compsed of the arraies in common block 
+c       initial particle list is compsed of the arraies in common block 
 c        'sa1_h', 'tau' and 'ishp' in 'sa8_h', and 'numb' in 'sa9_h'
-c	call prt_sa1_h(nsa) ! sa 
+c       call prt_sa1_h(nsa) ! sa 
         call filt_h
-c	call prt_sa1_h(nsa) ! sa
-c280910	time=0.
- 
+c       call prt_sa1_h(nsa) ! sa
+c280910 time=0.
+
 c       calculate position of center of mass of the system. distance of a 
 c        particle from this cms is used to check whether it is freezes out 
 c        or not
@@ -168,15 +168,15 @@ c        or not
 
 c       creat the initial collision list, note: be sure that the initial
 c        collision list must not be empty
-100	format(10(1x,i5))   
+100     format(10(1x,i5))   
         call ctlcre_h(lc,tc,tw,time)
 
-c	administrate hadron rescattering        
-	call scat_h(time,lc,tc,tw,ijkk,ijk,neve)
-	if(ijkk.eq.1)return   ! 100603
+c       administrate hadron rescattering        
+        call scat_h(time,lc,tc,tw,ijkk,ijk,neve)
+        if(ijkk.eq.1)return   ! 100603
 c       if ijkk=1 (infinite loops) give up the event 
-c	call prt_sa1_h(nsa) ! sa
-	time_had=time
+c       call prt_sa1_h(nsa) ! sa
+        time_had=time
 
 c       change K0,K0ba to K0L and K0S
         do j=1,nsa
@@ -188,8 +188,8 @@ c       change K0,K0ba to K0L and K0S
         endif
         enddo
 c       call prt_sa1_h(nsa) ! sa
-	return
-	end
+        return
+        end
 
 
 
