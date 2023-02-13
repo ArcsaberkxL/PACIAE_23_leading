@@ -3,9 +3,10 @@ c210921  generate partonic initial state in relativistic
 c	 pA,Ap,AA,lp, & lA collision based on 'pythia'   ! 140414
 c	it was composed by Ben-Hao Sa on 04/12/2003
 c	the intermediate working arraies are in common statement 'sa2'
-c       'saf' also consists of intermediate working arraies 
+c110123 arraies in 'saf' is consistent with intermediate working arraies 
 c       'saf' to 'pyjets' after call 'scat'   ! 220110 
-c	output message is in 'pyjets' (partons) and 'sbh' (hadrons) 
+c110123 output message is in 'pyjets' (partons) and 'sbh' (hadrons) for
+c        case of mstpt1=0, but is in 'sbh' for mstpt1=1 and low energy
       IMPLICIT DOUBLE PRECISION(A-H, O-Z)
       IMPLICIT INTEGER(I-N)
       INTEGER PYK,PYCHGE,PYCOMP  
@@ -53,7 +54,7 @@ c080104
 	common/sa15/nps,npsi,pps(5000,5),ppsi(5000,5)
 	common/sa23/kpar,knn,kpp,knp,kep   ! 200601 060813
         common/sa33/smadel,ecce,secce,parecc,iparres   ! 270312 240412 131212
-        common/schuds/schun,schudn,schudsn,sfra   ! she and Lei
+        common/schuds/schun,schudn,schudsn,sfra   ! She and Lei
 c	iii : number of current event
 c       csen: e+p total x section in fm^2
 c	neve : total number of events 
@@ -114,11 +115,11 @@ c270312 initiation of x,y,xy,x^2,y^2 and sump (statistics of the number of
 c	 nucleons in overlap region)   ! 131212
         sumx=0.
         sumy=0.
-	sumxy=0.   ! 131212
+        sumxy=0.   ! 131212
         sumx2=0.
         sumy2=0.
         sump=0.
-        adj130 = adj1(30)   !Lei20221212
+        adj130=adj1(30)   ! 121222 Lei
 c270312
 
 
@@ -167,7 +168,7 @@ c       distribute projectile nucleons by Woods-Saxon   ! 060921
         ratps=vneump/nap   ! ratio of projectile participant nucleons to total 
 c	if(iii.eq.10)write(9,*)'nap,vneump,ratps=',nap,vneump,ratps
 	do i1=1,nap
-        if( ABS(adj130 - 1.) .le. 1D-15 )then   !Lei20221212 i.e. adj130=1, avoids unexpected bugs.
+        if( ABS(adj130 - 1.).lt.1D-15 )then   ! 121222 Lei i.e. adj130=1, avoids unexpected bugs.
         rann=pyr(1)
         if(rann.lt.ratps)then
 c       sample position of projectile nucleon in overlap region of colliding 
@@ -181,7 +182,7 @@ c	 distribution
 c230311 last argument here is 'iway', iway=1: particle i1 must be outside the 
 C230311  overlap region of colliding nuclei, iway=0: no more requirement 
         endif
-        elseif( ABS(adj130 - 0.) .le. 1D-15 )then   !Lei20221212 i.e. adj130=0
+        elseif( ABS(adj130 - 0.).lt.1D-15 )then   ! 121222 Lei i.e. adj130=0
         call woodsax_samp(i1,1,alp,r0,am,ac,0)   ! 230311 060921
         endif
 	enddo
@@ -223,7 +224,7 @@ c	distribute target nucleons by Woods-Saxon   ! 060921
         ratps=vneumt/nat   ! ratio of target participant nucleons to total 
 	do i1=1,nat
 	i2=i1+nap
-        if( ABS(adj130 - 1.) .le. 1D-15 )then   !Lei20221212 i.e. adj130=1
+        if( ABS(adj130 - 1.).lt.1D-15 )then   ! 121222 Lei i.e. adj130=1
         rann=pyr(1)
         if(rann.lt.ratps)then
 c       sample position of target nucleon in overlap region of colliding nuclei
@@ -234,7 +235,7 @@ c	sample position of target nucleon according to Woods-Saxon
 c	 distribution
         call woodsax_samp(i2,0,alp,r0,am,ac,1)
         endif
-        elseif( ABS(adj130 - 0.) .le. 1D-15 )then   !Lei20221212 i.e. adj130=0
+        elseif( ABS(adj130 - 0.).lt.1D-15 )then   ! 121222 Lei i.e. adj130=0
         call woodsax_samp(i2,0,alp,r0,am,ac,0)   ! 060921
         endif
 	enddo
@@ -242,14 +243,14 @@ c191110
         do i=1,nap
 c050322 c17(i,1)=c17(i,1)+bp
         c17(i,1)=c17(i,1)+0.5*bp ! 050322 move x-component of origin to 0.5*bp
-!Lei20221215B--
-! Calculates eccentricity correctly for both adj(30)=0 and 1.
+c1512222
+c       Calculates eccentricity correctly for both adj(30)=0 and 1.   ! 151222 Lei
         x = c17(i,1)
         y = c17(i,2)
         z = c17(i,3)
-! Relative distance between the projectile nucleon i and the target center (-bp/2., 0, 0)
+c       Relative distance between the projectile nucleon i and the target center (-bp/2., 0, 0)
         rel_dist = SQRT( (x+bp/2.)**2 + y**2 + z**2 )
-! The projectile nucleon i is inside the target, i.e. inside the overlap region.
+c       The projectile nucleon i is inside the target, i.e. inside the overlap region.
         if( rel_dist .le. r0t )then
             sumx  = sumx  + x
             sumy  = sumy  + y
@@ -258,19 +259,19 @@ c050322 c17(i,1)=c17(i,1)+bp
             sumy2 = sumy2 + y**2
             sump  = sump  + 1.
         end if
-!Lei20221215E--
+c151222
         enddo
 c050322
         do i=nap+1,nap+nat
         c17(i,1)=c17(i,1)-0.5*bp
-!Lei20221215B--
-! Calculates eccentricity correctly for both adj(30)=0 and 1.
+c151222
+c       Calculates eccentricity correctly for both adj(30)=0 and 1.   ! 151222 Lei
         x = c17(i,1)
         y = c17(i,2)
         z = c17(i,3)
-! Relative distance between the target nucleon i and the projectile center (+bp/2., 0, 0)
+c       Relative distance between the target nucleon i and the projectile center (+bp/2., 0, 0)
         rel_dist = SQRT( (x-bp/2.)**2 + y**2 + z**2 )
-! The target nucleon i is inside the projectile, i.e. inside the overlap region.
+c       The target nucleon i is inside the projectile, i.e. inside the overlap region.
         if( rel_dist .le. r0p )then
             sumx  = sumx  + x
             sumy  = sumy  + y
@@ -279,7 +280,7 @@ c050322
             sumy2 = sumy2 + y**2
             sump  = sump  + 1.
         end if
-!Lei20221215E--
+c151222
         enddo
 c050322        
 c191110
@@ -737,6 +738,8 @@ c        common block 'sa4', and the array 'numb' in common block 'sa5'
 	time=time_ini   ! 081010
 	irecon=0
 
+        if(nosc.eq.2 .OR. nosc.eq.3) call oscar(win,0)   !Lei20230214 full_events_history of OSC1999A
+
 c       calculate the position for the center of mass of the
 c	non-freeze-out system. The distance of a particle, when checking
 c	is it freezing out or not, is measured with respect to this center
@@ -819,45 +822,46 @@ c	boost PYJETS back to lab or nucleon-nucleon cms system.
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
         subroutine sysini(win)   ! 060813
 c       give the initial values to quantities needed in calculation
-      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
-      IMPLICIT INTEGER(I-N)
-      INTEGER PYK,PYCHGE,PYCOMP  
-        parameter (kszj=80000)
-	COMMON/PYCIDAT1/KFACOT(100),DISDET(100),ISINELT(600)
-	common/sa5/kfmax,kfaco(100),numb(100),numbs(100),non5,
+        IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+        IMPLICIT INTEGER(I-N)
+        INTEGER PYK,PYCHGE,PYCOMP  
+        PARAMETER (KSZJ=80000)
+        COMMON/PYCIDAT1/KFACOT(100),DISDET(100),ISINELT(600)
+        common/sa5/kfmax,kfaco(100),numb(100),numbs(100),non5,
      c   disbe(100,100)
         common/count/isinel(600)
         COMMON/PYCIDAT2/KFMAXT,NONCI2,PARAM(20),WEIGH(600)
         common/sa6/kfmaxi,nwhole
         common/papr/t0,sig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
-     c  ,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
+     c   ,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
         common/syspar/ipden,itden,suppm,suptm,suppc,suptc,r0p,r0t,
-     c  nap,nat,nzp,nzt,pio
-	common/sa10/csnn,cspin,cskn,cspipi,cspsn,cspsm,rcsit,ifram,
-     &	iabsb,iabsm,non10,ajpsi,csspn,csspm,csen   ! 060813
+     c   nap,nat,nzp,nzt,pio
+        common/sa10/csnn,cspin,cskn,cspipi,cspsn,cspsm,rcsit,ifram,
+     &   iabsb,iabsm,non10,ajpsi,csspn,csspm,csen   ! 060813
         common/sa25/mstj1_1,mstj1_2,para1_1,para1_2   ! 221203 250204
+
         anat=nat
         anap=nap
-	param(1)=para1_1   ! 250204 200504
-c	write(9,*)'para1_1=',param(1)   ! 250204 200504
-c	rou0=PARAM(11)
+        param(1)=para1_1   ! 250204 200504
+c       write(9,*)'para1_1=',param(1)   ! 250204 200504
+c       rou0=PARAM(11)
 c       considering the nucleus as a sphere with radii rnt for target
 c        and rnp for projectile.
-c        rnt=(3.*anat/(4.*3.1415926*rou0))**(0.33333)
-c        rnp=(3.*anap/(4.*3.1415926*rou0))**(0.33333)
-	rp00=1.12   ! 1.05 to 1.12 070613
-	rt00=1.12   ! 1.05 to 1.12 070613
-c070613	if(nap.gt.16)rp00=1.16*(1-1.16*anap**(-0.666666)) !rp00=1.122 (nat=208)
-c070613	if(nat.gt.16)rt00=1.16*(1-1.16*anat**(-0.666666)) ! rt00=1.12 (nat=197)
-	if(itden.eq.0)rnt=rt00*anat**(0.33333)   ! 310805
+c       rnt=(3.*anat/(4.*3.1415926*rou0))**(0.33333)
+c       rnp=(3.*anap/(4.*3.1415926*rou0))**(0.33333)
+        rp00=1.12   ! 1.05 to 1.12 070613
+        rt00=1.12   ! 1.05 to 1.12 070613
+c070613 if(nap.gt.16)rp00=1.16*(1-1.16*anap**(-0.666666)) !rp00=1.122 (nat=208)
+c070613 if(nat.gt.16)rt00=1.16*(1-1.16*anat**(-0.666666)) ! rt00=1.12 (nat=197)
+        if(itden.eq.0)rnt=rt00*anat**(0.33333)   ! 310805
         if(itden.eq.1)rnt=rt00*anat**(0.33333)   ! +0.54  160511
-	if(nat.eq.2 .and. nzt.eq.1)rnt=4.0   ! 2.60 2.095  1.54 2603141
+        if(nat.eq.2 .and. nzt.eq.1)rnt=4.0   ! 2.60 2.095  1.54 2603141
 c060813 120214 if(ipden.eq.2)rnt=0.5   ! lepton
-	if(ipden.eq.0)rnp=rp00*anap**(0.33333)   ! 310805
+        if(ipden.eq.0)rnp=rp00*anap**(0.33333)   ! 310805
         if(ipden.eq.1)rnp=rp00*anap**(0.33333)   ! +0.54  160511
         if(ipden.ge.2)rnp=0.5   ! lepton   ! 060813 120214
-	if(nap.eq.2 .and. nzp.eq.1)rnp=4.0   ! 2.60 2.095  1.54
-	rou0=3./4./3.1416*anat/(rnt*rnt*rnt)   ! 310805
+        if(nap.eq.2 .and. nzp.eq.1)rnp=4.0   ! 2.60 2.095  1.54
+        rou0=3./4./3.1416*anat/(rnt*rnt*rnt)   ! 310805
         r0p=rnp
         r0t=rnt
 C       set initial values to some quantities
@@ -877,21 +881,21 @@ c060813 120214
         rots=sqrt((ept+0.938)*(ept+0.938)-win*win)
         endif
         if(ifram.eq.1)rots=win
-	call crosep(rots,csen)   ! temporary using e^-p total x-section  
-c	if(nzp.lt.0)call crosep(rots,csen)   ! e^-p total x-section
-c	if(nzp.ge.0)call crosepp(rots,csen)   ! e^+p total x-section  
+        call crosep(rots,csen)   ! temporary using e^-p total x-section  
+c       if(nzp.lt.0)call crosep(rots,csen)   ! e^-p total x-section
+c       if(nzp.ge.0)call crosepp(rots,csen)   ! e^+p total x-section  
         csen=csen*0.1
-	endif   
+        endif   
 c060813 120214
 c       largest collision distance between two colliding particles.
         edipi=dsqrt(cspipi/3.1416)
         epin=dsqrt(cspin/3.1416)
         ekn=dsqrt(cskn/3.1416)
         ecsnn=dsqrt(csnn/3.1416)
-	ecspsn=dsqrt(cspsn/3.1416)
-	ecspsm=dsqrt(cspsm/3.1416)
-	ecsspn=dsqrt(csspn/3.1416)
-	ecsspm=dsqrt(csspm/3.1416)
+        ecspsn=dsqrt(cspsn/3.1416)
+        ecspsm=dsqrt(cspsm/3.1416)
+        ecsspn=dsqrt(csspn/3.1416)
+        ecsspm=dsqrt(csspm/3.1416)
         ecsen=sqrt(csen/3.1416)   ! 060813
 
         anp=nap**.3333
@@ -899,13 +903,13 @@ c       largest collision distance between two colliding particles.
         do ia=1,2
         if(ia.eq.1)napt=nap
         if(ia.eq.2)napt=nat
-	if(napt.lt.27)then
+        if(napt.lt.27)then
         alpt=0.47
         elseif(napt.ge.27.and.napt.le.108)then
         alpt=0.488
-	else
-	alpt=0.54
-	endif
+        else
+        alpt=0.54
+        endif
         if(napt.eq.27)then
         alpt=0.478
         elseif(napt.eq.28)then
@@ -926,10 +930,10 @@ c       largest collision distance between two colliding particles.
         alpt=0.545
             elseif(napt.eq.238)then
         alpt=0.55
- 	endif
- 	if(ia.eq.1)alp=alpt
-  	if(ia.eq.2)alt=alpt
-   	enddo
+        endif
+        if(ia.eq.1)alp=alpt
+        if(ia.eq.2)alt=alpt
+        enddo
         suppc=rp00*anp+2.*alp
         suptc=rt00*ant+2.*alt
         suppm=1.d0/(1+dexp(0.d0-r0p/alp))
@@ -937,9 +941,9 @@ c       largest collision distance between two colliding particles.
 
         sig=PARAM(5)*0.1
         rcsit=PARAM(6)
-	t0=PARAM(7)   ! 230805
+        t0=PARAM(7)   ! 230805
 c230805t0=0.   ! 221102   
-c221102	proper formation time of particle from 'pythia'
+c221102 proper formation time of particle from 'pythia'
         dep=PARAM(9)
         ddt=PARAM(8)
         rao=PARAM(10)
@@ -1024,13 +1028,13 @@ c101014        c17(ii,1)=x
 c        c17(ii,2)=y
 c101014        c17(ii,3)=z
 c270312
-!Lei20221215 They are done in parini now for both adj(30)=0 and 1.
-!Lei20221215        sumx=sumx+x
-!Lei20221215        sumy=sumy+y
-!Lei20221215        sumxy=sumxy+x*y   ! 131212
-!Lei20221215        sumx2=sumx2+x*x
-!Lei20221215        sumy2=sumy2+y*y
-!Lei20221215        sump=sump+1.
+c151222 They are done in parini now for both adj(30)=0 and 1.   ! 151222 Lei
+c151222        sumx=sumx+x
+c151222        sumy=sumy+y
+c151222        sumxy=sumxy+x*y   ! 131212
+c151222        sumx2=sumx2+x*x
+c151222        sumy2=sumy2+y*y
+c151222        sump=sump+1.
 c270312
 	endif
 	if(jj.eq.1)then   ! ii in projectile (+b/2.)
@@ -1052,14 +1056,14 @@ c101014	c17(ii,1)=x
 c	 c17(ii,2)=y
 c101014        c17(ii,3)=z
 c270312
-!Lei20221215 They are done in parini now for both adj(30)=0 and 1.
-!Lei20221215	xb=x+b   ! 101014 chen
-!Lei20221215        sumx=sumx+xb   ! 101014
-!Lei20221215        sumy=sumy+y
-!Lei20221215        sumxy=sumxy+xb*y   ! 131212 101014
-!Lei20221215        sumx2=sumx2+xb*xb   ! 101014
-!Lei20221215        sumy2=sumy2+y*y
-!Lei20221215        sump=sump+1.
+c151222 They are done in parini now for both adj(30)=0 and 1.   ! 151222 Lei
+c151222	xb=x+b   ! 101014 chen
+c151222        sumx=sumx+xb   ! 101014
+c151222        sumy=sumy+y
+c151222        sumxy=sumxy+xb*y   ! 131212 101014
+c151222        sumx2=sumx2+xb*xb   ! 101014
+c151222        sumy2=sumy2+y*y
+c151222        sump=sump+1.
 c270312
 	endif
 55	return
@@ -1580,16 +1584,6 @@ c131019
 	time=tcp
 c	record this collision time
 
-
-c?????????????????????????????????????????????????????????????????
-csa	if(time.le.ttt)then
-c	record the spatial and momentum coordinates
-csa	if(iiii.eq.1)call txp(time0,time)
-c	calculate the time dependent direct and elliptic flow
-csa	call flow_t(time0,time)
-csa	endif
-csa***************************************************************
-
 cc	tlco(l,4)=tcp
 cc	tlco(l1,4)=tcp
 20	continue
@@ -1625,22 +1619,7 @@ c	boost to CMS frame of colliding pair
 	call lorntz(ilo,b,pi,pj)
 	ss=pi(4)+pj(4)
         if(ss.lt.1.e-18)ss=1.e-18
-c	perform classical Newton motion   
-1067	continue
-c       write(9,*)'af. loren pi,pj(4)=',pi(4),pj(4)   ! 100821
-        call his(time,lc,tc,tw,istop)   ! 080818
-c       write(9,*)'af. his iiii,iii,istop=',iiii,iii,istop   ! 100821
-	if(istop.eq.1)goto 100
-c	istop=1 means all particles have get out of considered volume
-c060805	if((l.le.m4 .and. l1.le.m4) .and. ss.ge.parp21)then   ! if 1
-c241110	if(((l.le.m2 .and. l1.le.m2).or.(kfa.eq.2212.and.kfb.eq.-2212)
-c241110     c   .or.(kfb.eq.2212.and.kfa.eq.-2212)) .and. ss.ge.parp21)
-c241110     c   then   ! if 1
-        if((ipden.lt.2.and.(l.le.m2 .and. l1.le.m2) .and. ss.ge.parp21)
-     c	 .or.(ipden.gt.2.and.(((kfaab.ge.11.and.kfaab.le.16).and.l1.le.
-     c	 m2).or.(l.le.m2.and.(kfbab.ge.11.and.kfbab.le.16))).and.ss.ge.
-     c	 parp21))then   ! if 1 011210 060813 120214
-c060813	m7 to m2
+
 c	calculate the angular 'seta' of the momenta pi and pj
 	ctai=pyangl(pi(3),dsqrt(pi(1)**2+pi(2)**2))
 	ctaj=pyangl(pj(3),dsqrt(pj(1)**2+pj(2)**2))
@@ -1653,12 +1632,28 @@ c       calculate the 'orentation' of the vector pi
 	call codi(pj,cfi1,sfi1,ccta1,scta1)
 	endif
 
-!Lei20221017        mstp(111)=mstptj   ! =0 230722    
+c	perform classical Newton motion   
+1067	continue
+c       write(9,*)'af. loren pi,pj(4)=',pi(4),pj(4)   ! 100821
+        call his(time,lc,tc,tw,istop)   ! 080818
+c       write(9,*)'af. his iiii,iii,istop=',iiii,iii,istop   ! 100821
+	if(istop.eq.1)goto 100
+c	istop=1 means all particles have get out of considered volume
 
-!Lei20221017 Now long-written statements are replaced as calling the subroutine xevent.
-!Lei20221017 The statements are re-wrote for better readability of code.
-! Executes collision event.
-      call xevent(ifram,kfa,kfb,ss,pti,ptj,cctai,cctaj)   !Lei20221017
+        if(win.ge.parp21)then   !! if 110123, high energy loop
+c060805	if((l.le.m4 .and. l1.le.m4) .and. ss.ge.parp21)then   ! if 1
+c241110	if(((l.le.m2 .and. l1.le.m2).or.(kfa.eq.2212.and.kfb.eq.-2212)
+c241110     c   .or.(kfb.eq.2212.and.kfa.eq.-2212)) .and. ss.ge.parp21)
+c241110     c   then   ! if 1
+        if((ipden.lt.2.and.(l.le.m2 .and. l1.le.m2) .and. ss.ge.parp21)
+     c	 .or.(ipden.gt.2.and.(((kfaab.ge.11.and.kfaab.le.16).and.l1.le.
+     c	 m2).or.(l.le.m2.and.(kfbab.ge.11.and.kfbab.le.16))).and.ss.ge.
+     c	 parp21))then   ! if 1 011210 060813 120214
+c060813	m7 to m2
+c171022 Now long-written statements are replaced as calling the subroutine xevent.
+c171022 The statements are re-wrote for better readability of code.
+c       Executes collision event.
+        call xevent(ifram,kfa,kfb,ss,pti,ptj,cctai,cctaj)   ! 171022 Lei
 
 500     continue
         if((ipden.eq.0 .and. itden.eq.0 .and. ifram.eq.1) .or. 
@@ -1858,6 +1853,12 @@ c	remove current nn collision pair from collision list
 c       removes hadrons from 'pyjets' to 'sbh' and truncate 'pyjets'
 c	 correspondingly
 	call remo   ! 010418,161021 removed from after 'recons' to before
+c100223
+        if(adj12.eq.2)then
+        call stahad
+        goto 997   ! similar to pythia-like
+        endif
+c100223
         if(ipden.lt.11)call pyedit(2)   
         if(ipden.ge.11)call pyedit(1)  
 c260620 write(22,*)'af. remo iii,n=',iii,n
@@ -2044,7 +2045,7 @@ c140414
 
 997     continue   ! 230722
 
-c       add CME charge separation for u d s,c   !she042021   !Lei20221021 For CME.
+c       add CME charge separation for u d s,c   ! 042021 She
 c        print*,"n=",n
         icme=adj1(23)   ! 221022
         if(icme.eq.0)goto 902
@@ -2113,20 +2114,612 @@ c170121
 	goto 300   ! ss is enough to call pythia	
 	endif   ! if 1
 
-c       if ss is not enough to call pythia then treating as elastic then
-c     calculate four-momentum of two particles,pi and pj,after elastic reaction, 
-c        pi and pj are in CMS frame colliding pair
+c010223 if ss is not enough to call pythia or current hadron-hadron
+c        collision pair is not in the plan of calling pythia, then it is 
+c       treat by two-body collison kinematic (ela. and inela.) 
         noinel(593)=noinel(593)+1   ! 140820
-c140820 noinel(593): statistics of # of nn collition which energy is not
-c        enough to call pythia
-9004	call coelas(l,l1,ss,pi,pj)
+c140820 noinel(593): statistics of # of hadron-hadron collition which energy 
+c        is not enough to call pythia or current hadron-hadron
+c        collision pair is not in the plan of calling pythia
+
+        ww=rcsit
+c       the cross section ratio of (ela.)/tot =1- rcsit
+c       ww=0.   ! active  for ela. scattering only
+c       ww=1.   ! active  for inela. scattering only
+        rrlu=pyr(1)
+
+        if(rrlu.gt.ww)then    !!1
+        call coelas(l,l1,ss,pi,pj)
 c       update the particle list for elastic scattering, pi and pj have been
 c       boosted back to Lab frame or cms of nucleus-nucleus collision 
-	call updple(l,l1,b,pi,pj)
-c	statistics of the number of elastic nn collisions
+        call updple(l,l1,b,pi,pj)
+c	statistics of the number of ela. hadron-hadron collisions for 
+c        high energy channel        
         noinel(1)=noinel(1)+1
-c       update the collision list after elastic scattering
+c       update the collision list after ela. scattering
         call updatl(l,l1,time,lc,tc,tw,iii)
+c       note: CME is not included for ela. scattering
+        if(nctl.eq.0)goto 100
+        goto 300
+
+        elseif(rrlu.le.ww)then   !!1 
+c       perform hadron-hadron inelastic scattering                
+c     p: 2212; n:2112; delta0: 2114; delta+: 2214; delta-: 1114; delta++: 2224
+c       consider following 2->2 nucleon-nucleon ielas. channels 
+c     1       p + p to delta+ + p
+c     2       p + p to delta++ + n
+c     3       p + n to delta+ + n
+c     4       p + n to delta0 + p
+c     5       n + n to delta0 + n
+c     6       n + n to delta- + p
+c       reverse scattering is not considered
+
+c       give flavor code to inelastically scattered particles
+        rpy=pyr(1)
+        if(kfa.eq.2212.and.kfb.eq.2212)then   ! pp   !!
+        if(rpy .gt. 0.5)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=2212
+c       give four momentum to inelastically scattered particles 
+        call coinel_nn(l,l1,2214,2212,pi,pj)
+c       decay of unstable hadron        
+        call padecy(l,l1,time)
+c       output particles of 'padecy' compose 'pyjets'
+        jorn=3   ! delta+ -> p + pi0
+c       jorn=0 (3): inelastically scattered particles not join (join) 
+c        reconstruction of hadronic collision pair
+        goto 302
+        else
+        ksa(l,2)=2224   ! delta++
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,2224,2112,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta++ -> p + pi+
+        goto 302
+        endif
+
+        elseif(kfa.eq.2212.and.kfb.eq.2112)then   ! pn   !!
+        if(rpy .gt. 0.5)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,2214,2112,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta+ -> p + pi0
+        goto 302
+        else
+        ksa(l,2)=2114   ! delta0
+        ksa(l1,2)=2212 
+        call coinel_nn(l,l1,2114,2212,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta0 -> n + pi0
+        goto 302
+        endif
+
+        elseif(kfa.eq.2112.and.kfb.eq.2212)then   ! np   !!
+        if(rpy .gt. 0.5)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,2214,2112,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta+ -> p + pi0
+        goto 302
+        else
+        ksa(l,2)=2114   ! delta0
+        ksa(l1,2)=2212
+        call coinel_nn(l,l1,2114,2212,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta0 -> n + pi0
+        goto 302
+        endif
+
+        elseif(kfa.eq.2112.and.kfb.eq.2112)then   ! nn   !!
+        if(rpy .gt. 0.5)then
+        ksa(l,2)=2114   !  delta0
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,2114,2112,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta0 -> n + pi0
+        goto 302
+        else
+        ksa(l,2)=1114   ! delta-
+        ksa(l1,2)=2212
+        call coinel_nn(l,l1,1114,2212,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta- -> n + pi-
+        goto 302
+        endif
+
+        else   !!
+c       otherwise treat as ela.
+c       perform hadron-hadron ela. scattering and rotation
+        call coelas(l,l1,ss,pi,pj)
+c       boosted back to Lab frame (cms of nucleus-nucleus collision) &
+c        then update the particle list for ela. scattering
+c       boosted back to Lab frame or cms of nucleus-nucleus collision
+        call updple(l,l1,b,pi,pj)
+c       update the collision list after elastic scattering,
+        call updatl(l,l1,time,lc,tc,tw,iii)
+        if(nctl.eq.0)goto 100
+        goto 300
+
+        endif   !!
+
+302     continue
+c       prepare rotation        
+        do j=1,n
+        do j1=1,4
+        pint(j1)=p(j,j1)
+        enddo
+c       perform the rotate for inelas. scattered particles in 'pythia'
+        call rosa(cfi1,sfi1,ccta1,scta1,cfis,sfis,cctas,sctas,pint)
+        do j1=1,4
+        p(j,j1)=pint(j1)
+        enddo
+        enddo
+c       write(22,*)'af. rosa n=',iii,n
+c       call prt_pyj(n,c)
+
+c       boost back to Lab.
+        ilo=1
+        do j=1,n,2
+        if(j.eq.n)then
+        do j1=1,4
+        pi(j1)=p(j,j1)
+        enddo
+        call lorntz(ilo,b,pi,pi)
+        do j1=1,4
+        p(j,j1)=pi(j1)
+        enddo
+        goto 5200
+        endif
+        do j1=1,4
+        pi(j1)=p(j,j1)
+        pj(j1)=p(j+1,j1)
+        enddo
+        call lorntz(ilo,b,pi,pj)
+        do j1=1,4
+        p(j,j1)=pi(j1)
+        p(j+1,j1)=pj(j1)
+        enddo
+5200    enddo
+c       write(22,*)'af. lor n=',n
+c       call prt_pyj(n,c)
+
+c       give four position to the particles after after inelas. scattering
+c        in 'pyjets'
+        call ptcre(l,l1,time)   
+c       write(22,*)'af. ptcre n=',n
+c       call prt_pyj(n,c)
+
+c       add CME charge separation for u d s,c   ! 042021 She
+c        print*,"n=",n
+        icme=adj1(23)   ! 221022
+        if(icme.eq.0)goto 9023
+        if((nap.eq.nat).and.(nzp.eq.nzt).and.(icme.eq.1))
+     c    call chargecme(win)
+9023     continue
+c       write(22,*)'af. CME n=',n
+c       call prt_pyj(n,c)
+
+c       'pyjets' to 'sbh'
+        nbh=0
+        do i=1,kszj
+        do j=1,5
+        kbh(i,j)=0
+        pbh(i,j)=0.
+        vbh(i,j)=0.
+        enddo
+        enddo
+        if(n.eq.0)goto 5003
+        nbh=n
+        do li=1,nbh
+        do m1=1,5
+        kbh(li,m1)=k(li,m1)
+        pbh(li,m1)=p(li,m1)
+        vbh(li,m1)=v(li,m1)
+        enddo
+        enddo
+5003    continue   
+c       write(22,*)'pyjets to sbh nbh=',nbh
+c       call prt_sbh(nbh,c)
+c       write(22,*)'flavor=',(kbh(i1,2),i1=1,nbh)     
+c       call prt_sa2(nsa,c)                
+c       update hadron list 'sa2' after inela. scattering  ('sbh' to 'sa2')
+        nsa0=nsa   ! 250123
+        call updpip_nn(l,l1,icp,lc,tc,tw,time)   ! 250123
+c       write(22,*)'af. updpip nsa=',nsa
+c       call prt_sa2(nsa,c)
+
+c       update collision time list after inela. scattering
+        call updatl_nn(l,l1,time,lc,tc,tw,jorn,nsa0)   ! 250123
+c       write(22,*)'end of loop iii,nsa=',iii,nsa
+c       call prt_sa2(nsa,c)
+        if(nctl.eq.0)goto 100
+        goto 300
+        else   !!1
+        endif   !!1
+
+c010223        
+        endif   !! if 110123, high energy loop end
+
+c161222
+        if(win.lt.parp21)then    !!! if 110123, low energy loop
+        ww=rcsit
+c       ww=0.   ! active  for ela. scattering only
+c       ww=1.   ! active  for inela. scattering only
+c       if(iiii.eq.1.and.iii.eq.1)write(9,*)'inela./tot=rcsit=',rcsit
+c       the cross section ratio of (ela.)/tot =1- rcsit
+        rrlu=pyr(1)
+
+        if(rrlu.gt.ww)then   !1 ela.
+c       perform nucleon-nucleon (NN) elastic scattering and rotation            
+        call coelas(l,l1,ss,pi,pj)
+c       boosted back to Lab frame (cms of nucleus-nucleus collision) & 
+c        then update the particle list for elastic scattering
+c       boosted back to Lab frame or cms of nucleus-nucleus collision 
+        call updple(l,l1,b,pi,pj)
+c       update the collision list after elastic scattering, 
+        call updatl(l,l1,time,lc,tc,tw,iii)
+        if(nctl.eq.0)goto 100
+        goto 300
+        
+        elseif(rrlu.le.ww)then   !1 inela.
+c       perform NN inelastic scattering                
+c     p: 2212; n:2112; delta0: 2114; delta+: 2214; delta-: 1114; delta++: 2224
+c       consider following 2->2 nucleon-nucleon ielas. channels 
+c     1       p + p to delta+ + p
+c     2       p + p to delta++ + n
+c     3       p + n to delta+ + n
+c     4       p + n to delta0 + p
+c     5       n + n to delta0 + n
+c     6       n + n to delta- + p
+c       reverse scattering is not considered
+c       perform piN inelastic scattering
+c     pi+: 211; pi-: -211; pi0: 111 
+c       consider following 2->2 pi-nucleon ielas. channels
+c     7	      pion- + p to delta- + pion+
+c     8	      pion- + p to rho0 + n
+c     9	      pion- + p to rho- + p
+c     10      pion- + p to delta+ + pion-
+c     11      pion- + p to delta0 + pion0
+c     12      pion- + n to delta- + pion0
+c     13      pion- + n to rho- + n
+c     14      pion- + n to delta0 + pion-
+c     15      pion+ + p to delta++ + pion0
+c     16      pion+ + p to delta+ + pion+
+c     17      pion+ + p to rho+ + p
+c     18      pion+ + n to delta++ + pion-
+c     19      pion+ + n to delta0 + pion+
+c     20      pion+ + n to delta+ + pion0
+c     21      pion+ + n to rho0 + p
+c     22      pion+ + n to rho+ + n
+c       assume pion0 decay instantly, it is not able to reconstrut
+c        collion pair, following processes is not considered 
+c     23      pion0 + p to delta0 + pion+
+c     24      pion0 + p to delta++ + pion-
+c     25      pion0 + p to rho+ + n
+c     26      pion0 + p to rho0 + p
+c     27      pion0 + p to delta+ + pion0
+c     28      pion0 + n to delta+ + pion-
+c     29      pion0 + n to delta- + pion+
+c     30      pion0 + n to delta0 + pion0
+
+c       write(22,*)'enter loop iii,nsa,kfa,kfb=',iii,nsa,kfa,kfb
+c       give flavor code to inelastically scattered particles
+        rpy=pyr(1)
+        if(kfa.eq.2212.and.kfb.eq.2212)then   ! pp   !!
+        if(rpy .gt. 0.5)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=2212
+c       give four momentum to inelastically scattered particles 
+        call coinel_nn(l,l1,2214,2212,pi,pj)
+c       decay of unstable hadron        
+        call padecy(l,l1,time)
+c       output particles of 'padecy' compose 'pyjets'
+        jorn=3   ! delta+ -> p + pi0
+c       jorn=0 (3): inelastically scattered particles not join (join) 
+c        reconstruction of hadronic collision pair
+        goto 301
+        else
+        ksa(l,2)=2224   ! delta++
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,2224,2112,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta++ -> p + pi+
+        goto 301
+        endif
+
+        elseif(kfa.eq.2212.and.kfb.eq.2112)then   ! pn   !!
+        if(rpy .gt. 0.5)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,2214,2112,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta+ -> p + pi0
+        goto 301
+        else
+        ksa(l,2)=2114   ! delta0
+        ksa(l1,2)=2212 
+        call coinel_nn(l,l1,2114,2212,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta0 -> n + pi0
+        goto 301
+        endif
+
+        elseif(kfa.eq.2112.and.kfb.eq.2212)then   ! np   !!
+        if(rpy .gt. 0.5)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,2214,2112,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta+ -> p + pi0
+        goto 301
+        else
+        ksa(l,2)=2114   ! delta0
+        ksa(l1,2)=2212
+        call coinel_nn(l,l1,2114,2212,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta0 -> n + pi0
+        goto 301
+        endif
+
+        elseif(kfa.eq.2112.and.kfb.eq.2112)then   ! nn   !!
+        if(rpy .gt. 0.5)then
+        ksa(l,2)=2114   !  delta0
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,2114,2112,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta0 -> n + pi0
+        goto 301
+        else
+        ksa(l,2)=1114   ! delta-
+        ksa(l1,2)=2212
+        call coinel_nn(l,l1,1114,2212,pi,pj)
+        call padecy(l,l1,time)
+        jorn=3   ! delta- -> n + pi-
+        goto 301
+        endif
+
+        elseif(kfa.eq.-211.and.kfb.eq.2212)then   ! (pi-)p   !!
+        if(rpy .le. 0.2)then        
+        ksa(l,2)=1114   ! delta-
+        ksa(l1,2)=211
+        call coinel_nn(l,l1,1114,211,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0
+        goto 301
+        elseif(rpy .gt. 0.2 .and. rpy .le. 0.4)then
+        ksa(l,2)=113   ! rho0
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,113,2112,pi,pj)
+        call sa2pyj(l,l1) 
+        jorn=0 
+        goto 301        
+        elseif(rpy .gt. 0.4 .and. rpy .le. 0.6)then
+        ksa(l,2)=-213   ! rho-
+        ksa(l1,2)=2212
+        call coinel_nn(l,l1,-213,2212,pi,pj)
+        call sa2pyj(l,l1)
+        jorn=0   
+        goto 301
+        elseif(rpy .gt. 0.6 .and. rpy .le. 0.8)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=-211
+        call coinel_nn(l,l1,2214,-211,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0
+        goto 301
+        elseif(rpy .gt. 0.8)then
+        ksa(l,2)=2114   ! delta0
+        ksa(l1,2)=111
+        call coinel_nn(l,l1,2114,111,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0
+        goto 301
+        endif
+
+        elseif(kfa.eq.-211.and.kfb.eq.2112)then   ! (pi-)n   !!
+        if(rpy .le. 0.3333)then
+        ksa(l,2)=1114   ! delta-
+        ksa(l1,2)=111
+        call coinel_nn(l,l1,1114,111,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0
+        goto 301
+        elseif(rpy .gt. 0.3333 .and. rpy .le. 0.6666)then
+        ksa(l,2)=-213   ! rho-
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,-213,2112,pi,pj)
+        call sa2pyj(l,l1)
+        jorn=0
+        goto 301
+        elseif(rpy .gt. 0.6666)then
+        ksa(l,2)=2114   ! delta0
+        ksa(l1,2)=-211
+        call coinel_nn(l,l1,2114,-211,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0
+        goto 301
+        endif        
+                
+        elseif(kfa.eq.211.and.kfb.eq.2212)then   ! (pi+)p   !!
+        if(rpy .le. 0.3333)then
+        ksa(l,2)=2224   ! delta++
+        ksa(l1,2)=111
+        call coinel_nn(l,l1,2224,111,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0
+        goto 301
+        elseif(rpy .gt. 0.3333 .and. rpy .le. 0.6666)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=211
+        call coinel_nn(l,l1,2214,211,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0
+        goto 301
+        elseif(rpy .gt. 0.6666)then
+        ksa(l,2)=213   ! rho+
+        ksa(l1,2)=2212
+        call coinel_nn(l,l1,213,2212,pi,pj)
+        call sa2pyj(l,l1)
+        jorn=0
+        goto 301        
+        endif
+ 
+        elseif(kfa.eq.211.and.kfb.eq.2112)then   ! (pi+)n   !!
+        if(rpy .le. 0.2)then        
+        ksa(l,2)=2224   ! delta++
+        ksa(l1,2)=-211
+        call coinel_nn(l,l1,2224,-211,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0
+        goto 301
+        elseif(rpy .gt. 0.2 .and. rpy .le. 0.4)then
+        ksa(l,2)=2114   ! delta0
+        ksa(l1,2)=211
+        call coinel_nn(l,l1,2114,211,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0 
+        goto 301        
+        elseif(rpy .gt. 0.4 .and. rpy .le. 0.6)then
+        ksa(l,2)=2214   ! delta+
+        ksa(l1,2)=111
+        call coinel_nn(l,l1,2214,111,pi,pj)
+        call padecy(l,l1,time)
+        jorn=0   
+        goto 301
+        elseif(rpy .gt. 0.6 .and. rpy .le. 0.8)then
+        ksa(l,2)=113   ! rho0
+        ksa(l1,2)=2212
+        call coinel_nn(l,l1,113,2212,pi,pj)
+        call sa2pyj(l,l1)
+        jorn=0
+        goto 301
+        elseif(rpy .gt. 0.8)then
+        ksa(l,2)=213   ! rho+
+        ksa(l1,2)=2112
+        call coinel_nn(l,l1,213,2112,pi,pj)
+        call sa2pyj(l,l1)
+        jorn=0
+        goto 301
+        endif
+
+        else   !!
+c010223                
+c       otherwise treat as ela. 
+c       perform hadron-hadron ela. scattering and rotation
+        call coelas(l,l1,ss,pi,pj)
+c       boosted back to Lab frame (cms of nucleus-nucleus collision) &
+c        then update the particle list for ela. scattering
+c       boosted back to Lab frame or cms of nucleus-nucleus collision
+        call updple(l,l1,b,pi,pj)
+c       update the collision list after elastic scattering,
+        call updatl(l,l1,time,lc,tc,tw,iii)
+        if(nctl.eq.0)goto 100
+        goto 300
+c010223
+
+        endif   !!
+
+301     continue       
+c       write(22,*)'af. inela. =',
+c       call prt_pyj(n,c)        
+c       prepare rotation        
+        do j=1,n
+        do j1=1,4
+        pint(j1)=p(j,j1)
+        enddo
+c       perform the rotate for inelas. scattered particles in 'pythia'
+        call rosa(cfi1,sfi1,ccta1,scta1,cfis,sfis,cctas,sctas,pint)
+        do j1=1,4
+        p(j,j1)=pint(j1)
+        enddo
+        enddo
+c       write(22,*)'af. rosa n=',iii,n
+c       call prt_pyj(n,c)
+
+c       boost back to Lab.
+        ilo=1
+        do j=1,n,2
+        if(j.eq.n)then
+        do j1=1,4
+        pi(j1)=p(j,j1)
+        enddo
+        call lorntz(ilo,b,pi,pi)
+        do j1=1,4
+        p(j,j1)=pi(j1)
+        enddo
+        goto 5100
+        endif
+        do j1=1,4
+        pi(j1)=p(j,j1)
+        pj(j1)=p(j+1,j1)
+        enddo
+        call lorntz(ilo,b,pi,pj)
+        do j1=1,4
+        p(j,j1)=pi(j1)
+        p(j+1,j1)=pj(j1)
+        enddo
+5100    enddo
+c       write(22,*)'af. lor n=',n
+c       call prt_pyj(n,c)
+
+c       give four position to the particles after after inelas. scattering
+c        in 'pyjets'
+        call ptcre(l,l1,time)   
+c       write(22,*)'af. ptcre n=',n
+c       call prt_pyj(n,c)
+
+c       add CME charge separation for u d s,c   ! 042021 She
+c        print*,"n=",n
+        icme=adj1(23)   ! 221022
+        if(icme.eq.0)goto 9022
+        if((nap.eq.nat).and.(nzp.eq.nzt).and.(icme.eq.1))
+     c    call chargecme(win)
+9022     continue
+c       write(22,*)'af. CME n=',n
+c       call prt_pyj(n,c)
+
+c       'pyjets' to 'sbh'
+        nbh=0
+        do i=1,kszj
+        do j=1,5
+        kbh(i,j)=0
+        pbh(i,j)=0.
+        vbh(i,j)=0.
+        enddo
+        enddo
+        if(n.eq.0)goto 5002
+        nbh=n
+        do li=1,nbh
+        do m1=1,5
+        kbh(li,m1)=k(li,m1)
+        pbh(li,m1)=p(li,m1)
+        vbh(li,m1)=v(li,m1)
+        enddo
+        enddo
+5002    continue   
+c       write(22,*)'pyjets to sbh nbh=',nbh
+c       call prt_sbh(nbh,c)
+c       write(22,*)'flavor=',(kbh(i1,2),i1=1,nbh)     
+c       call prt_sa2(nsa,c)                
+c       update hadron list 'sa2' after inela. scattering  ('sbh' to 'sa2')
+        nsa0=nsa   ! 250123
+        call updpip_nn(l,l1,icp,lc,tc,tw,time)   ! 250123
+c       write(22,*)'af. updpip nsa=',nsa
+c       call prt_sa2(nsa,c)
+
+c       update collision time list after inela. scattering
+        call updatl_nn(l,l1,time,lc,tc,tw,jorn,nsa0)   ! 250123
+c       write(22,*)'end of loop iii,nsa=',iii,nsa
+c       call prt_sa2(nsa,c)
+        if(nctl.eq.0)goto 100
+        goto 300
+
+        else   !1         
+        endif  !1
+
+        endif   !!! if 110123   !!! if 110123, low energy loop end
 
 300	continue
         iii=iii+1
@@ -2150,139 +2743,141 @@ c       write(9,*)'iiii,iii,nctl0,nctlm=',iiii,iii,nctl0,nctlm   ! 100821
 
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      subroutine xevent(ifram,kf_a,kf_b,ss,pt_a,pt_b,ccta_a,ccta_b)
-!Lei20221017 A new subroutine to execute the binary NN and lN collision.
-!            It replaces the previous long-written statements.
-      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
-      IMPLICIT INTEGER(I-N)
-      INTEGER PYK,PYCHGE,PYCOMP
-      COMMON/PYPARS/MSTP(200),PARP(200),MSTI(200),PARI(200)
-      common/syspar/ipden,itden,suppm,suptm,suppc,suptc,r0p,r0t,
-     c              nap,nat,nzp,nzt,pio
-      common/sa1/kjp21,non1,bp,iiii,neve,nout,nosc
-!      common/sa10/csnn,cspin,cskn,cspipi,cspsn,cspsm,rcsit,ifram,
-!     &            iabsb,iabsm,non10,ajpsi,csspn,csspm,csen   ! 060813
-      common/sa23/kpar,knn,kpp,knp,kep   ! 060813
-      common/sa30/vneump,vneumt,mstptj   ! 230722
-      common/sa34/itorw,iikk,cp0,cr0,kkii   ! 060617 010418 010518 040920
+        subroutine xevent(ifram,kf_a,kf_b,ss,pt_a,pt_b,ccta_a,ccta_b)
+c171022 A new subroutine to execute the binary NN and lN collision.
+c       It replaces the previous long-written statements.   ! 171022 Lei
+        IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+        IMPLICIT INTEGER(I-N)
+        INTEGER PYK,PYCHGE,PYCOMP
+        COMMON/PYPARS/MSTP(200),PARP(200),MSTI(200),PARI(200)
+        common/syspar/ipden,itden,suppm,suptm,suppc,suptc,r0p,r0t,
+     c   nap,nat,nzp,nzt,pio
+        common/sa1/kjp21,non1,bp,iiii,neve,nout,nosc
+c       common/sa10/csnn,cspin,cskn,cspipi,cspsn,cspsm,rcsit,ifram,
+c     &   iabsb,iabsm,non10,ajpsi,csspn,csspm,csen   ! 060813
+        common/sa23/kpar,knn,kpp,knp,kep   ! 060813
+        common/sa30/vneump,vneumt,mstptj   ! 230722
+        common/sa34/itorw,iikk,cp0,cr0,kkii   ! 060617 010418 010518 040920
 
-      character name_a*16, name_b*16, name_frame*16, name_x*16
+        character name_a*16, name_b*16, name_frame*16, name_x*16
 
-      mstp(111)=mstptj   ! =0 230722
-! Gets name of particles a and b.
-      call pyname(kf_a,name_a)
-      call pyname(kf_b,name_b)
-! Sets name of frame. The collider frame is the default.
-      if( ifram.eq.0 )then
-          name_frame = "FIXT"
-      elseif( ifram.eq.1 )then
-          name_frame = "CMS"
-      else
-          name_frame = "CMS"
-      endif
-! ccta_a: the cosine of the angular 'seta' of 
-!         the momentum for particle a.
-      if( (kf_a.ne.kf_b) .AND. (ccta_a.lt.0.) )then
-          name_x = name_a
-          name_a = name_b
-          name_b = name_x
-      endif
-! Initilizes the colllision.
-      call pyinit( TRIM(ADJUSTL(name_frame)),
-     &             TRIM(ADJUSTL(name_a)),
-     &             TRIM(ADJUSTL(name_b)),
-     &             ss )
-! Executes the collision. Calling PYEVNW is the default.
-      if( itorw.eq.1 )then
-          call pyevnt
-      elseif( itorw.eq.2 )then
-          call pyevnw
-      else
-          call pyevnw
-      endif
-! Removes unnecessary entries in PYJET.
-      if( ipden.lt.11 ) call pyedit(2)
-      if( ipden.ge.11 ) call pyedit(1)
+        mstp(111)=mstptj   ! =0 230722
+c       Gets name of particles a and b.
+        call pyname(kf_a,name_a)
+        call pyname(kf_b,name_b)
+c       Sets name of frame. The collider frame is the default.
+        if( ifram.eq.0 )then
+            name_frame = "FIXT"
+        elseif( ifram.eq.1 )then
+            name_frame = "CMS"
+        else
+            name_frame = "CMS"
+        endif
+c       ccta_a: the cosine of the angular 'seta' of 
+!        the momentum for particle a.
+        if( (kf_a.ne.kf_b) .AND. (ccta_a.lt.0.) )then
+            name_x = name_a
+            name_a = name_b
+            name_b = name_x
+        endif
+c       Initilizes the colllision.
+        call pyinit( TRIM(ADJUSTL(name_frame)),
+     &               TRIM(ADJUSTL(name_a)),
+     &               TRIM(ADJUSTL(name_b)),
+     &               ss )
+c       Executes the collision. Calling PYEVNW is the default.
+        if( itorw.eq.1 )then
+            call pyevnt
+        elseif( itorw.eq.2 )then
+            call pyevnw
+        else
+            call pyevnw
+        endif
+c       Removes unnecessary entries in PYJET.
+        if( ipden.lt.11 ) call pyedit(2)
+        if( ipden.ge.11 ) call pyedit(1)
 
-! Records the numbers of the participant nucleons (kpar), 
-!     binary pp (kpp), pn/np (knp), and nn collisions (knn), 
-!     or lepton-nucleon collisions (kep).
-      if( (ipden.lt.2) .AND. (itden.lt.2) )then
-          if( (kf_a.eq.kf_b) .AND. (kf_a.eq.2212) ) kpp = kpp + 1
-          if( (kf_a.eq.kf_b) .AND. (kf_a.eq.2112) ) knn = knn + 1
-          if(  kf_a.ne.kf_b  )                      knp = knp + 1
-          if(  pt_a.le.1D-4 ) kpar = kpar + 1
-          if(  pt_b.le.1D-4 ) kpar = kpar + 1
-      elseif( (ipden.ge.11) .AND. (itden.ge.11) )then
-          kep = kep + 1
-      endif
+c       Records the numbers of the participant nucleons (kpar), 
+c        binary pp (kpp), pn/np (knp), and nn collisions (knn), 
+c        or lepton-nucleon collisions (kep).
+        if( (ipden.lt.2) .AND. (itden.lt.2) )then
+            if( (kf_a.eq.kf_b) .AND. (kf_a.eq.2212) ) kpp = kpp + 1
+            if( (kf_a.eq.kf_b) .AND. (kf_a.eq.2112) ) knn = knn + 1
+            if(  kf_a.ne.kf_b  )                      knp = knp + 1
+            if(  pt_a.le.1D-4 ) kpar = kpar + 1
+            if(  pt_b.le.1D-4 ) kpar = kpar + 1
+        elseif( (ipden.ge.11) .AND. (itden.ge.11) )then
+            kep = kep + 1
+        endif
 
 
-      return
-      end
+        return
+        end
 
 
 
 c************************************************************
         subroutine chargecme(win)
-c   the CME-induced charge initial charge separation by switching the 
-c   py values of a fraction of the downward(upward) moving(u,d,s,c)quarks 
-c   for symmetrical collision systems,i.e., Ru&Ru Zr&Zr at RHIC and LHC.
-c   Here in symmetrical systems, nap=nat,nzp=nzt, and the fraction and
-c   magnetic field function is A*bp-B*bp^3 type.  by shezl 2021
-c   she and Lei For CME.
-      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
-      IMPLICIT INTEGER(I-N)
-      parameter(kszj=80000)
-      COMMON/PYJETS/N,NONJ,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)
-      common/sa1/kjp21,non1,bp,iii,neve,nout,nosc
-      common/syspar/ipden,itden,suppm,suptm,suppc,suptc,r0p,r0t,
-     c  nap,nat,nzp,nzt,pio
-      common/schuds/schun,schudn,schudsn,sfra
-      common/sa24/adj1(40),nnstop,non24,zstop
-      dimension numk(kszj)
-      real(kind=8) p2u,erhic,erela,rerzcp,ruzcp
+c       The CME-induced charge initial charge separation by switching the 
+c        py values of a fraction of the downward(upward) moving(u,d,s,c)quarks 
+c        for symmetrical collision systems,i.e., Ru&Ru Zr&Zr at RHIC and LHC.
+c       Here in symmetrical systems, nap=nat,nzp=nzt, and the fraction and
+c        magnetic field function is A*bp-B*bp^3 type.  by shezl 2021
+c       She and Lei For CME.
+        IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+        IMPLICIT INTEGER(I-N)
+        PARAMETER(KSZJ=80000)
+        COMMON/PYJETS/N,NONJ,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)
+        common/sa1/kjp21,non1,bp,iii,neve,nout,nosc
+        common/syspar/ipden,itden,suppm,suptm,suppc,suptc,r0p,r0t,
+     &   nap,nat,nzp,nzt,pio
+        common/schuds/schun,schudn,schudsn,sfra
+        common/sa24/adj1(40),nnstop,non24,zstop
+        dimension numk(kszj)
+        real(kind=8) p2u,erhic,erela,rerzcp,ruzcp
 
-       erhic=200.                     ! RHIC energy 200 
-       erela=0.45+0.55*(win/erhic)  !RHIC energy as a base
-       rnzp=real(nzp)
-       rnap=real(nap)
-       rerz=rnzp/rnap
-       ruzcp=((96./42.)*rerz)**(0.667) !isobar Zr Ru(96,42)as a base
+        erhic=200.                     ! RHIC energy 200
+        erela=0.45+0.55*(win/erhic)  !RHIC energy as a base
+        rnzp=real(nzp)
+        rnap=real(nap)
+        rerz=rnzp/rnap
+        ruzcp=((96./42.)*rerz)**(0.667) !isobar Zr Ru(96,42)as a base
 
-       sfra=3.1*(2448.135*nap**(-1.667)*bp-160.810*nap**(-2.333)*bp**3.)
-     c         *erela*ruzcp*0.01
+        sfra=3.1*(2448.135*nap**(-1.667)*bp-160.810*nap**(-2.333)
+     &           *bp**3.)*erela*ruzcp*0.01
 
-c      print*,"erela,ruzcp,nap,nzp,bp,sfra",erela,ruzcp,nap,nzp,bp,sfra
+c        print*,"erela,ruzcp,nap,nzp,bp,sfra",erela,ruzcp,nap,nzp,bp,sfra
 
-       do 140  i=1,n
-       if(abs(k(i,2)).eq.1.or.abs(k(i,2)).eq.2.or.abs(k(i,2)).eq.3
-     c  .or.(k(i,2)).eq.4)then
+        do i=1,n
+        if(abs(k(i,2)).eq.1.or.abs(k(i,2)).eq.2.or.abs(k(i,2)).eq.3
+     &   .or.(k(i,2)).eq.4)then
         schun=schun+1
         if(pyr(1).gt.0..and.pyr(1).le.sfra)then
         numk(i)=0
         schudn=schudn+1
-        do 150 ii=1,n
-         if(numk(ii).eq.1) cycle
-        do 160 jj=ii+1,n
-         if(numk(jj).eq.1) cycle
-          if((k(ii,2)+k(jj,2)).eq.0.and.(k(ii,2)*p(ii,2).lt.0).and.
-     c         (k(jj,2)*p(jj,2).lt.0))then
+        do ii=1,n
+        if(numk(ii).eq.1) cycle
+        do jj=ii+1,n
+        if(numk(jj).eq.1) cycle
+        if((k(ii,2)+k(jj,2)).eq.0.and.(k(ii,2)*p(ii,2).lt.0).and.
+     &   (k(jj,2)*p(jj,2).lt.0))then
 
-             p2u=p(ii,2)
-             p(ii,2)=p(jj,2)
-             p(jj,2)=p2u
-             schudsn=schudsn+1
-             numk(ii)=1
-             numk(jj)=1
-             goto 160
-          endif
-160       enddo
-150       enddo
-          endif
-          endif
-140       enddo
-          end
+        p2u=p(ii,2)
+        p(ii,2)=p(jj,2)
+        p(jj,2)=p2u
+        schudsn=schudsn+1
+        numk(ii)=1
+        numk(jj)=1
+        endif
+        enddo
+        enddo
+        endif
+        endif
+        enddo
+
+
+        return
+        end
 
 
 
@@ -2527,6 +3122,7 @@ c        from 'sa2'
         common/sa6/kfmaxi,nwhole
         common/sa12/ppsa(5),nchan,nsjp,sjp,taup,taujp
         common/sa14/ipyth(2000),idec(2000),iwide(2000)
+        common/sa30/vneump,vneumt,mstptj   ! 290123
         common/sppb/nppb,non3,kppb(1000,5),pppb(1000,5),vppb(1000,5) ! 281121
         common/papr/t0,sig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
      c  ,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
@@ -2540,8 +3136,8 @@ c060813	ipyth: stord line number of produced hadron in hadron list (sa2),101221
         enddo
 c281121 
 c       'sppb' (reconstructed hadrons) to 'SBH' 
-        if(((ipden.eq.0 .and. itden.eq.1) .or.
-     c   (ipden.eq.1 .and. itden.eq.0)) .and. nppb.ge.1)then
+        if(((ipden.eq.0 .and. itden.eq.1) .or. (ipden.eq.1 .and. 
+     c   itden.eq.0)) .and. (nppb.ge.1 .and. mstptj.eq.0))then   ! 290123
         do i1=1,nppb
         n=n+1
         do i2=1,5
@@ -2630,9 +3226,9 @@ c	 is assume to be equal to t0 fm/c, except nucleon and j/psi
         numb(m)=numb(m)+1
         enddo
 	nsa=nsa+1
-	goto 500
-600     continue
-c	if produced hadron is not in considered hadron list
+        goto 500
+600     enddo   ! 040223
+c040223 if produced hadron is not in given hadron classification
 	nsa=nsa+1
         do m=1,5
         ksa(nsa,m)=k(i,m)
@@ -2641,8 +3237,8 @@ c	if produced hadron is not in considered hadron list
         enddo
         ishp(nsa)=0
         tau(nsa)=0.
-	ipyth(i)=nsa   
-500	continue
+	ipyth(i)=nsa  
+500	enddo   ! 040223
 200     continue   ! 241110
 c241110
 c        if(iiii.eq.5)then
@@ -3722,8 +4318,8 @@ c	call pylist(1)
 
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-        subroutine remo   ! 110517 010418
-c       moves hadrons (leptons) from 'pyjets' to 'sbh'   060813
+        subroutine remo   ! 110517 010418 040223
+c       moves hadron (lepton) and junction from 'pyjets' to 'sbh'   060813
       IMPLICIT DOUBLE PRECISION(A-H, O-Z)
       IMPLICIT INTEGER(I-N)
       INTEGER PYK,PYCHGE,PYCOMP
@@ -3732,6 +4328,7 @@ c       moves hadrons (leptons) from 'pyjets' to 'sbh'   060813
         common/sbh/nbh,nonbh,kbh(kszj,5),pbh(kszj,5),vbh(kszj,5)
 	common/sa1/kjp21,non1,bp,iii,neve,nout,nosc
 	common/sa12/ppsa(5),nchan,nsjp,sjp,taup,taujp
+        common/sa24/adj1(40),nnstop,non24,zstop   ! 060223
 	nbh=0
 	do i1=1,kszj
         do j1=1,5
@@ -3740,18 +4337,37 @@ c       moves hadrons (leptons) from 'pyjets' to 'sbh'   060813
         vbh(i1,j1)=0.
         enddo
         enddo
+        adj12=adj1(12)   ! 060223
         jb=0
-201     do i1=jb+1,n   ! do loop 090122
+201     do 202 i1=jb+1,n   ! do loop 090122 060223
         kf=k(i1,2)
         kfab=iabs(kf)
+c060223        
+
+        if(adj12.eq.0)then   ! keep junction in 'pyjets'
         if(kfab.le.8 .or. kfab.eq.2101 .or. kfab.eq.3101
      c   .or. kfab.eq.3201 .or. kfab.eq.1103 .or. kfab.eq.2103
      c   .or. kfab.eq.2203 .or. kfab.eq.3103 .or. kfab.eq.3203
-     c   .or. kfab.eq.3303 .or. kfab.eq.21 .or. kfab.eq.88)then   ! 010418
+     c   .or. kfab.eq.3303 .or. kfab.eq.21 .or. kfab.eq.88)then
         jb=jb+1
         goto 202
         endif
+        goto 204
+        endif   !
+
+        if(adj12.eq.1 .or. adj12.eq.2)then   !! 
+c100223  remove junction from 'pyjets' to 'sbh'
+        if(kfab.le.8 .or. kfab.eq.2101 .or. kfab.eq.3101
+     c   .or. kfab.eq.3201 .or. kfab.eq.1103 .or. kfab.eq.2103
+     c   .or. kfab.eq.2203 .or. kfab.eq.3103 .or. kfab.eq.3203                
+     c   .or. kfab.eq.3303 .or. kfab.eq.21)then
+c060223        
+        jb=jb+1
+        goto 202
+        endif
+        endif   !!
 c	write(9,*)'n,i1,jb=',n,i1,jb   ! sa
+204     continue   ! 060223
         nbh=nbh+1
         do i2=1,5
         kbh(nbh,i2)=k(i1,i2)
@@ -3771,7 +4387,7 @@ c	move particle list one step downward from i1+1 to n
         enddo
         enddo
         n=n-1
-        goto 201   ! this statement is needless 090122
+        goto 201
 202     enddo   ! do loop 090122
 203     continue
 	return
@@ -4545,6 +5161,7 @@ c	update collision list after calling 'pythia' successfully
         common/sa12/ppsa(5),nchan,nsjp,sjp,taup,taujp
 	common/sa14/ipyth(2000),idec(2000),iwide(2000)
 c010530        common/sa19/kji   ! 16/09/99
+        common/sa30/vneump,vneumt,mstptj   ! 010223
         COMMON/SBH/N,NON,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)  
 	common/ctllist/nctl,noinel(600),nctl0,nctlm   ! 180121 230121
         common/papr/t0,sig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
@@ -4577,7 +5194,12 @@ c       through away the pair whih tc<= time
         lc(i,m)=0
         enddo
         enddo
-
+c010223
+        if(mstptj.eq.1)then   ! for (c) channel (pythia-like channel)
+        nctl=j
+        return
+        endif           
+c010223        
 c	write(9,*)'updtlp rmove nctl,nbh,m4=',j,n,numb(4)   ! sa
 c	do i=1,j
 c	write(9,*)'i,lci,lcj,t=',i,lc(i,1),lc(i,2),tc(i)
@@ -5255,4 +5877,347 @@ c       move particle list (pyjets) one step forward from ii-1 to 1
         enddo
         return
         end
+
+
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc161222
+        subroutine coinel_nn(l,l1,kl,kl1,pi,pj)   ! 110123
+c       simulate four momentum of scattered particles in inelastic 
+c        nucleon-nucleon collision according formula of (4. 33)
+c        in book of Ben-Hao Sa, etc., 'Simulation Physics for High Energy 
+c        Nucleus Collisions'
+c       l (l1): order number of scattering and/or scattered prticle in 'sa2'
+c       kl (kl1): flavor code of scattered particle  
+c       pi (pj): four momentum of scattering particle before scatering
+c       pi (pj): four momentum of scattered particle after scatering also
+
+        IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+        IMPLICIT INTEGER(I-N)
+        INTEGER PYK,PYCHGE,PYCOMP
+        parameter(kszj=80000)
+        common/sa2/nsa,non2,ksa(kszj,5),psa(kszj,5),vsa(kszj,5)
+        dimension pi(4),pj(4)
+        am3=pymass(kl)   ! mass of one scattered particle
+        am4=pymass(kl1)   ! mass of another one scattered particle
+        ss=pi(4)+pj(4)
+        pp=(ss*ss-(am3+am4)**2)*(ss*ss-(am3-am4)**2)/(4.*ss*ss)
+        if(pp.lt.0.)pp=1.e-10
+        pp=sqrt(pp)
+        pi(4)=(ss*ss+am3**2-am4**2)/(2.*ss)
+c       energy of one particle (between two) after scattering
+        fis=2.*3.1415926*pyr(1)
+        cfis=cos(fis)
+        sfis=sin(fis)
+        csita=2*pyr(1)-1.
+        ssita=dsqrt(1.-csita**2)
+        pi(1)=pp*ssita*cfis
+        pi(2)=pp*ssita*sfis
+        pi(3)=pp*csita
+        do i=1,3
+        pj(i)=0.-pi(i)
+        enddo
+        pj(4)=ss-pi(4)
+
+        do i2=1,4
+        psa(l,i2)=pi(i2)   ! four momentum of one collided particle
+        psa(l1,i2)=pj(i2)   ! four momentum of another one collided particle
+        enddo
+
+        return
+        end
+
+
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+	subroutine padecy(l,l1,time)   ! 161222
+c	deacy of a hardron
+c       l: order # of colliding hadron in 'sa2'
+c       l1: order # of another colliding hadron in 'sa2'
+c       time: current time
+c       output hadrons compose 'pyjets'
+C...Double precision and integer declarations.
+      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+      IMPLICIT INTEGER(I-N)
+      INTEGER PYK,PYCHGE,PYCOMP
+      parameter (kszj=80000)
+        common/pyjets/n,npad,k(kszj,5),p(kszj,5),v(kszj,5)
+        COMMON/PYDAT1/MSTU(200),PARU(200),MSTJ(200),PARJ(200)
+        COMMON/PYDAT3/MDCY(500,3),MDME(8000,2),BRAT(8000),KFDP(8000,5)
+        common/sa2/nsa,non2,ksa(kszj,5),psa(kszj,5),vsa(kszj,5)
+c       write(22,*)'enter nsa,l,l1,k=',nsa,l,l1,ksa(l,2),ksa(l1,2)
+c       write(22,*)'pl=',psa(l,1),psa(l,2),psa(l,3)
+c       write(22,*)'pl1=',psa(l1,1),psa(l1,2),psa(l1,3)
+c       write(22,*)'e=',psa(l,4),psa(l1,4)
+c       write(22,*)'enter loop nsa =',nsa
+c       call prt_sa2(nsa,c)
+       
+        n=0
+        do i1=1,kszj
+        do i2=1,5
+        k(i1,i2)=0
+        p(i1,i2)=0.
+        v(i1,i2)=0
+        enddo
+        enddo
+
+        n=1
+        k(1,1)=1
+        kf=ksa(l,2)
+        k(1,2)=kf
+        do i2=1,4
+        p(1,i2)=psa(l,i2)
+        enddo
+        p(1,5)=pymass(kf)
+        mdcy(pycomp(kf),1)=1
+c       call pyedit(2)
+c       write(22,*)'af. fill first'
+c       call pylist(1)
+
+        call pydecy(1)
+        call pyedit(2)
+c       write(22,*)'af. call pydecy'
+c       call pylist(1)
+
+        n=3
+        k(3,1)=1
+        k(3,2)=ksa(l1,2)
+        do i1=1,5
+        p(3,i1)=psa(l1,i1)
+        enddo
+c       write(22,*)'af. padecy n=',n
+c       call prt_pyj(n,c)
+
+        return
+	end
+
+
+
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+	subroutine sa2pyj(l,l1)   ! 161222
+c	part of 'sa2' to 'pyjets'
+c       l: order # of colliding hadron in 'sa2'
+c       l1: order # of another colliding hadron in 'sa2'
+c       output hadrons compose 'pyjets'
+C...Double precision and integer declarations.
+      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+      IMPLICIT INTEGER(I-N)
+      INTEGER PYK,PYCHGE,PYCOMP
+      parameter (kszj=80000)
+        common/pyjets/n,npad,k(kszj,5),p(kszj,5),v(kszj,5)
+        COMMON/PYDAT1/MSTU(200),PARU(200),MSTJ(200),PARJ(200)
+        COMMON/PYDAT3/MDCY(500,3),MDME(8000,2),BRAT(8000),KFDP(8000,5)
+        common/sa2/nsa,non2,ksa(kszj,5),psa(kszj,5),vsa(kszj,5)
+        n=0
+        do i1=1,kszj
+        do i2=1,5
+        k(i1,i2)=0
+        p(i1,i2)=0.
+        v(i1,i2)=0
+        enddo
+        enddo
+
+        n=2
+        k(1,1)=1
+        k(1,2)=ksa(l,2)
+        do i1=1,5
+        p(1,i1)=psa(l,i1)
+        enddo
+        k(2,1)=1
+        k(2,2)=ksa(l1,2)
+        do i1=1,5
+        p(2,i1)=psa(l1,i1)
+        enddo
+
+        return
+        end       
+
+
+ 
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        subroutine updpip_nn(l,l1,icp,lc,tc,tw,time)   ! 250123
+c       update particle list 'sa2' ('sbh' to 'sa2') after inela. scattering 
+      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+      IMPLICIT INTEGER(I-N)
+      INTEGER PYK,PYCHGE,PYCOMP
+        parameter (kszj=80000,nsize=280000)   ! 080223
+        common/sa2/nsa,non2,ksa(kszj,5),psa(kszj,5),vsa(kszj,5)
+        common/sbh/nbh,nonbh,kbh(kszj,5),pbh(kszj,5),vbh(kszj,5)
+        dimension lc(nsize,5),tc(nsize),tw(nsize)         
+
+
+c       update particle list 'sa2' ('sbh' to 'sa2')      
+        if(nbh.eq.3)then   ! from call 'padecay'
+        do i2=1,5
+        ksa(l,i2)=kbh(1,i2)
+        psa(l,i2)=pbh(1,i2)
+        vsa(l,i2)=vbh(1,i2)
+        enddo
+        do i2=1,5
+        ksa(l1,i2)=kbh(3,i2)
+        psa(l1,i2)=pbh(3,i2)
+        vsa(l1,i2)=vbh(3,i2)
+        enddo
+        nsa=nsa+1
+        do i2=1,5
+        ksa(nsa,i2)=kbh(2,i2)
+        psa(nsa,i2)=pbh(2,i2)
+        vsa(nsa,i2)=vbh(2,i2)
+        enddo
+        endif
+
+        if(nbh.eq.2)then   ! from 'call sa2pyj' 
+        do i2=1,5
+        ksa(l,i2)=kbh(1,i2)
+        psa(l,i2)=pbh(1,i2)
+        vsa(l,i2)=vbh(1,i2)
+        enddo
+        do i2=1,5
+        ksa(l1,i2)=kbh(2,i2)
+        psa(l1,i2)=pbh(2,i2)
+        vsa(l1,i2)=vbh(2,i2)
+        enddo
+        endif
+
+        return 
+        end
+
+
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+	subroutine updatl_nn(ic,jc,time,lc,tc,tw,ik,nsa0)   ! 250123
+c	update collision time list after inela. scattering
+c       ic (jc): order number of inela. scattering patticle in 'sa2'
+c       ik: number of hadrons joining reconstrution of hadronic colli. pair 
+c       time: current time
+c       nsa0: last oder number in 'sa2' before call 'updpip_nn'
+      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+      IMPLICIT INTEGER(I-N)
+      INTEGER PYK,PYCHGE,PYCOMP
+	parameter (kszj=80000)
+	parameter(nsize=280000)
+      COMMON/PYDAT1/MSTU(200),PARU(200),MSTJ(200),PARJ(200)
+        common/sa2/nsa,non2,ksa(kszj,5),psa(kszj,5),vsa(kszj,5)
+	common/sa5/kfmax,kfaco(100),numb(100),numbs(100),non5,
+     c   disbe(100,100)
+        common/sa12/ppsa(5),nchan,nsjp,sjp,taup,taujp  
+	common/ctllist/nctl,noinel(600),nctl0,nctlm   ! 180121 230121 
+        common/papr/t0,sig,dep,ddt,edipi,epin,ecsnn,ekn,ecspsn,ecspsm
+     c 	,rnt,rnp,rao,rou0,vneu,vneum,ecsspn,ecsspm,ecsen   ! 060813
+        common/syspar/ipden,itden,suppm,suptm,suppc,suptc,r0p,r0t,
+     c  nap,nat,nzp,nzt,pio
+	dimension lc(nsize,5),tc(nsize),tw(nsize)
+
+c	loop over old colliding pairs
+	j=0
+	do i=1,nctl
+	i1=lc(i,1)
+	j1=lc(i,2)
+	if(i1.eq.ic .or. i1.eq.jc)goto 400
+	if(j1.eq.ic .or. j1.eq.jc)goto 400
+	if((tc(i)-time).le.ddt) goto 400
+c	through away the pair whih tc<= time
+	j=j+1
+	tc(j)=tc(i)
+	tw(j)=tw(i)
+	do m=1,5
+	lc(j,m)=lc(i,m)
+	enddo
+400	continue
+	enddo
+	do i=j+1,nctl+1
+	tc(i)=0.0
+	tw(i)=0.0
+	do m=1,5
+	lc(i,m)=0
+	enddo
+	enddo
+        if(ik.eq.0)then
+        nctl=j        
+        return
+        endif
+
+	nctl=j+1
+c       loop over inelastically scatered (new generated) hadrons
+
+        do 500 ii=1,2   
+c       loop over new generated hadron which has filled in 'sa2' at ic (jc)
+        if(ii.eq.1)j1=ic
+        if(ii.eq.2)j1=jc
+        kfab=iabs(ksa(j1,2))   ! 060813 120214
+c       if(kfab.ne.2212.and.kfab.ne.2112.and.kfab.ne.11.and.kfab
+c       c   .ne.12.and.kfab.ne.13.and.kfab.ne.14.and.kfab.ne.15
+c       c   .and.kfab.ne.16)goto 300   ! 241110 m7 to m2 060813 120214
+        if(kfab.ne.2212.and.kfab.ne.2112.and.kfab.ne.211
+     c   .and.kfab.ne.11.and.kfab.ne.12.and.kfab.ne.13
+     c   .and.kfab.ne.14.and.kfab.ne.15.and.kfab.ne.16)goto 300 ! not join
+!        reconstruction of hadronic collision pair        
+c       consider only the reinteraction between NN, Npi+, Npi-, & Nlepton 
+c	loop over old particle list
+        do i=1,nsa   ! do 600
+	if(j1.eq.ic .and. i.eq.jc)goto 600 
+	if(j1.eq.jc .and. i.eq.ic)goto 600
+c	forbiden scattered particles colliding with each other
+	if(nctl.gt.nsize)then
+        write(MSTU(11),*)'size of array "nsize" needs to be extended'
+        write(MSTU(11),*)'error is serious,stop running'
+        stop 22222
+        endif
+
+ 	i1=i
+	iflag=0
+	call rsfilt(j1,i1,iflag)
+	if(iflag.eq.0)goto 100
+	tc(nctl)=0.0
+	call tcolij(i1,j1,time,nctl,lc,tc,tw)
+	if(tc(nctl).gt.1.0e-7) nctl=nctl+1
+100	continue		
+600	enddo
+300	continue
+500	enddo
+
+        do 800 ii=nsa0+1,nsa   ! loop over other generated hadrons
+        j1=ii
+        kfab=iabs(ksa(j1,2))
+        if(kfab.ne.2212.and.kfab.ne.2112.and.kfab.ne.211
+     c   .and.kfab.ne.11.and.kfab.ne.12.and.kfab.ne.13
+     c   .and.kfab.ne.14.and.kfab.ne.15.and.kfab.ne.16)goto 301 ! not join
+!        reconstruction of hadronic collision pair        
+c       consider only the reinteraction between NN, Npi+, Npi-, & Nlepton 
+c	loop over old particle list
+        do i=1,nsa0   ! do 600
+	if(j1.eq.ic .and. i.eq.jc)goto 601 
+	if(j1.eq.jc .and. i.eq.ic)goto 601
+c	forbiden scattered particles colliding with each other
+	if(nctl.gt.nsize)then
+        write(MSTU(11),*)'size of array "nsize" needs to be extended'
+        write(MSTU(11),*)'error is serious,stop running'
+        stop 22222
+        endif
+
+ 	i1=i
+	iflag=0
+	call rsfilt(j1,i1,iflag)
+	if(iflag.eq.0)goto 101
+	tc(nctl)=0.0
+	call tcolij(i1,j1,time,nctl,lc,tc,tw)
+	if(tc(nctl).gt.1.0e-7) nctl=nctl+1
+101	continue		
+601	enddo
+301	continue
+800	enddo
+
+700	if(tc(nctl).le.1.e-7) nctl=nctl-1
+	do i=nctl+1,nsize
+	do m=1,5
+	lc(i,m)=0
+	enddo
+	tc(i)=0.
+	tw(i)=0.
+	enddo
+	return
+	end
+
+
+
 ccccccccccccccccccccccccccccccccccccc  end  cccccccccccccccccccccccccccc

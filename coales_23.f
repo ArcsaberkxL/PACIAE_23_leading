@@ -45,7 +45,7 @@ c271022 Moved from 'coal' to here
 c271022
 
 	rrp=1.16
-	nn=0   ! nn: the particle number of this event.
+	nn=0   
         do i1=1,kszj
           do j1=1,5
           kn(i1,j1)=0.
@@ -59,6 +59,7 @@ c271022
         ibc=adj1(14)
 	iphas=adj1(21)
 
+        if(adj1(40).eq.3)then   ! 070223
 c220822 remove junctions
         jb=0
 2010    do i1=jb+1,n  ! i1 loop      
@@ -68,19 +69,11 @@ c220822 remove junctions
         jb=jb+1
         goto 2020
         endif
-c       move particle list 'pyjets' one step downward since i1+1 to n
-c       do j=i1+1,n
-c       do jj=1,5
-c       k(j-1,jj)=k(j,jj)
-c       p(j-1,jj)=p(j,jj)
-c       v(j-1,jj)=v(j,jj)
-c       enddo
-c       enddo
         call updad_pyj(n,i1+1,1)   ! 090922 'updad_pyj' in sfm_23.f
         n=n-1
         goto 2010
-2020    enddo   ! i1 loop        
-c220822        
+2020    enddo   ! i1 loop
+        endif   ! 070223
 
 c	Conservation of net baryon.
 	netba=0
@@ -256,8 +249,9 @@ c	ich : total charge of the partons thrown away
 
 	iqba=ithrob   ! not active originally
 	n3=ithroq+ithrob   ! not active originally
-	if(iphas.eq.1 .and. n3.ge.2)then
+	if(iphas.ne.0 .and. n3.ge.2)then   !070223
 	  call coal(n3,iqba,ijk,rrp,0,0)   ! 110905
+c070223 re-coalesce rest parton after last 'call coal'
 	endif
  
 c150922 ichth=ich   ! 092600
@@ -963,11 +957,13 @@ c     Find out the primary baryon from hadron table due to kf1,kf2 & kf3
         if(isucc.eq.0)goto 406   ! fail, and keep on cycle, try again.
 
 c	Proceed for success   
+c070223        
 c	Phase space adjudgment
-        if(iphas.eq.1)then
-	    call phas(i1,i2,i3,isucc,3)
-          if(isucc.eq.0)goto 406   ! fail
-        endif
+        if(iphas.ne.0)then   ! change from '.eq.1' to '.ne.0'
+        call phas(i1,i2,i3,isucc,3,iphas)   ! phase spase adjudgment Lei20230214 added iphas
+        if(isucc.eq.0)goto 406   ! fail
+        endif   !!1
+c070223        
 
 c	  Proceed for success
         ibarp=ibarp+1
@@ -1108,11 +1104,13 @@ c	 & kf3
         if(isucc.eq.0)goto 406   ! fail
 
 c	Proceed for success   
+c070223        
 c	Phase space adjudgment
-        if(iphas.eq.1)then
-	    call phas(i1,i2,i3,isucc,3)
-          if(isucc.eq.0)goto 406   ! fail
-        endif
+        if(iphas.ne.0)then   ! change from '.eq.1' to '.ne.0'
+        call phas(i1,i2,i3,isucc,3,iphas)   ! phase spase adjudgment Lei20230214 added iphas
+        if(isucc.eq.0)goto 406   ! fail
+        endif   !!1
+c070223        
 
 c	Proceed for success
 	  goto 400
@@ -1257,11 +1255,13 @@ c     Find out primary meson from hadronic table according to kf2 & kf1
 
         if(isucc.eq.0)goto 102   ! fail
 c	Proceed for success
+c070223        
 c	Phase space adjudgment
-	  if(iphas.eq.1)then
-	    call phas(i1,i2,0,isucc,2)
-          if(isucc.eq.0)goto 102   ! fail
-        endif
+        if(iphas.ne.0)then   ! change from '.eq.1' to '.ne.0'
+        call phas(i1,i2,i3,isucc,2,iphas)   ! phase spase adjudgment Lei20230214 added iphas
+        if(isucc.eq.0)goto 102   ! fail
+        endif   !
+c070223 
 
 c	Proceed for success
 	  imes=imes+1
@@ -1494,7 +1494,7 @@ c	Fill the generated q & qba into parton list ('pyjets') after n
 
 c       Give four position to generated q & qba        
 c        generated q and qba are arranged around sourve parton within 0.5 fm 
-c        randumly in each one of the three coordinates and has same fourth 
+c        randomly in each one of the three coordinates and has same fourth 
 c        coordinate as sourve parton
 	do i=1,3
 	rr(i)=pyr(1)*0.5
@@ -1624,74 +1624,82 @@ c280822 pnn(ii1,5)=p(ii,5)
 
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-	subroutine funcz(zz,ij)   ! 081222
+        subroutine funcz(zz,ij)   ! 081222
 c       Sample daughter energy fraction, zz, from mother according to 
 c        fragmentation function by selecting sample method 
-c       Field-Feymman fragmentation function is used if adj1(29)=1 
-c       Lund string fragmentation function is used if adj1(29)=0  
-c	FF fragmentation function: f(z)dz=[1-a+3*a*(1-z)**2]dz, 0<z<1,
-c	 and its largest value: fmax=f(0)=1-a+3*a=1+2*a.
+c       adj1(29)=1 : Lund string fragmentation function           !Lei20230214
+c               =2 : Field-Feymman fragmentation function
 c       Lund string fragmentation function: f(z)=(1/z)*(1-z)^a
 c        *exp(-b*m_{\per}^2/z) \sim (1/z)*(1-z)^a*exp(-2.36*b/z)
 c        assume: m_{\per}^2 \sim <p_T>^2+m_u^2 \sim 1.5^2+0.333^2=2.36
+c       FF fragmentation function: f(z)dz=[1-a+3*a*(1-z)**2]dz, 0<z<1,
+c        and its largest value: fmax=f(0)=1-a+3*a=1+2*a.
 c       ij: number of calling 'funcz'
 C...Double precision and integer declarations.
-      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
-      IMPLICIT INTEGER(I-N)
-      INTEGER PYK,PYCHGE,PYCOMP
-      common/sa1/kjp21,non1,bp,iii,neve,nout,nosc   ! 081222 
-      common/sa24/adj1(40),nnstop,non24,zstop
-	a=adj1(6)   
-	b=adj1(7)   ! 081222
+        IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+        IMPLICIT INTEGER(I-N)
+        INTEGER PYK,PYCHGE,PYCOMP
+        common/sa1/kjp21,non1,bp,iii,neve,nout,nosc   ! 081222
+        common/sa24/adj1(40),nnstop,non24,zstop
+        a=adj1(6)
+        b=adj1(7)   ! 081222
         adj29=adj1(29)   ! 081222
 c081222
-        if(adj29.eq.0 .and. iii.eq.1 .and. ij.eq.1)then
+        if(adj29.eq.1 .and. iii.eq.1 .and. ij.eq.1)then   !Lei20230214 if adj29=1
         fmax=0.
         z1=0.025
         do i1=1,20
-        z=z1+(i1-1)*0.05    
+        z=z1+(i1-1)*0.05
         fzz=(1/z)*(1-z)**a*dexp(-2.36*b/z)
-        if(fzz.gt.fmax)fmax=fzz    
+        if(fzz.gt.fmax)fmax=fzz
         enddo
-        else      
-	fmax=1+2*a
-        endif  
-c081222      
-100	ran1=pyr(1)
-	ran2=pyr(1)
-	fm=ran1*fmax
-c081222
-        if(adj29.eq.0)then
-        fran2=(1/ran2)*(1-ran2)**a*dexp(-2.36*b/ran2)
-        elseif(adj29.eq.1)then        
-	fran2=1.-a+3*a*(1.-ran2)**2.   ! 101204
+        elseif(adj29.eq.2)then   !Lei20230214 if adj29=2
+        fmax=1+2*a
         else
-        endif   
-c081222        
-      if(fm.gt.fran2)goto 100   ! 101204
-	zz=ran2  	
-	return 
-	end
+        fmax=1+2*a
+        endif
+c081222
+100     ran1=pyr(1)
+        ran2=pyr(1)
+        fm=ran1*fmax
+c081222
+        if(adj29.eq.1)then   !Lei20230214 if adj29=1
+        fran2=(1/ran2)*(1-ran2)**a*dexp(-2.36*b/ran2)
+        elseif(adj29.eq.2)then   !Lei20230214 if adj29=2
+        fran2=1.-a+3*a*(1.-ran2)**2.   ! 101204
+        else
+        fran2=1.-a+3*a*(1.-ran2)**2.   ! 101204
+        endif
+c081222
+        if(fm.gt.fran2)goto 100   ! 101204
+        zz=ran2
+        return
+        end
 
 
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-	subroutine phas(i1,i2,i3,isucc,j)
-c	The phase space judgement.
-c	j=2 for meson
-c	j=3 for baryon
+        subroutine phas(i1,i2,i3,isucc,j,iphas)   !Lei20230214 added iphas
+c       The phase space judgement.
+c       j=2 for meson
+c       j=3 for baryon
+c       iphas: = 1, complete phase space constraint  !Lei20230214
+c              = 2, position constraint only
+c              = 3, momentum constraint only
 C...Double precision and integer declarations.
-      IMPLICIT DOUBLE PRECISION(A-H, O-Z)
-      IMPLICIT INTEGER(I-N)
-      INTEGER PYK,PYCHGE,PYCOMP
-	parameter(kszj=80000,mplis=80000)   ! 150922
-      COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 150922
-      common/sa24/adj1(40),nnstop,non24,zstop
-	dimension ri1(3),ri2(3),ri3(3),pi1(3),pi2(3),pi3(3)
-	delc=adj1(22)
+        IMPLICIT DOUBLE PRECISION(A-H, O-Z)
+        IMPLICIT INTEGER(I-N)
+        INTEGER PYK,PYCHGE,PYCOMP
+        PARAMETER(KSZJ=80000,MPLIS=80000)   ! 150922
+        COMMON/PYJETS/N,NPAD,K(KSZJ,5),P(KSZJ,5),V(KSZJ,5)   ! 150922
+        common/sa24/adj1(40),nnstop,non24,zstop
+        dimension ri1(3),ri2(3),ri3(3),pi1(3),pi2(3),pi3(3)
+        delc=adj1(22)
+        if( ABS(adj1(21) - 2.).lt.1D-15 .OR. 
+     &      ABS(adj1(21) - 3.).lt.1D-15 ) delc=0.5*delc   !Lei20230214 adj21=2 or 3
 
-	if(j.eq.2)goto 100   ! for meson
-c	 proceed for baryon 
+        if(j.eq.2)goto 100   ! for meson
+c       proceed for baryon 
         ri1(1)=v(i1,1)
         ri1(2)=v(i1,2)
         ri1(3)=v(i1,3)
@@ -1710,9 +1718,9 @@ c	 proceed for baryon
         ri231=ri2(1)-ri3(1)
         ri232=ri2(2)-ri3(2)
         ri233=ri2(3)-ri3(3)
-	delr12=sqrt(ri121*ri121+ri122*ri122+ri123*ri123)
-	delr13=sqrt(ri131*ri131+ri132*ri132+ri133*ri133)
-	delr23=sqrt(ri231*ri231+ri232*ri232+ri233*ri233)
+        delr12=sqrt(ri121*ri121+ri122*ri122+ri123*ri123)
+        delr13=sqrt(ri131*ri131+ri132*ri132+ri133*ri133)
+        delr23=sqrt(ri231*ri231+ri232*ri232+ri233*ri233)
         pi1(1)=p(i1,1)
         pi1(2)=p(i1,2)
         pi1(3)=p(i1,3)
@@ -1731,21 +1739,38 @@ c	 proceed for baryon
         pi231=pi2(1)-pi3(1)
         pi232=pi2(2)-pi3(2)
         pi233=pi2(3)-pi3(3)
-	delp12=sqrt(pi121*pi121+pi122*pi122+pi123*pi123)
-	delp13=sqrt(pi131*pi131+pi132*pi132+pi133*pi133)
-	delp23=sqrt(pi231*pi231+pi232*pi232+pi233*pi233)
-	del12=delr12*delp12
-	del13=delr13*delp13
-	del23=delr23*delp23
+        delp12=sqrt(pi121*pi121+pi122*pi122+pi123*pi123)
+        delp13=sqrt(pi131*pi131+pi132*pi132+pi133*pi133)
+        delp23=sqrt(pi231*pi231+pi232*pi232+pi233*pi233)
 
-	if(del12.le.delc.and.del13.le.delc.and.del23.le.delc)then
-	  isucc=1
-	else
-	  isucc=0
-	endif
-	return
+!Lei20230214B-
+        if(iphas.eq.1)then   ! complete phase space constain
+            del12=delr12*delp12
+            del13=delr13*delp13
+            del23=delr23*delp23
+        elseif(iphas.eq.2)then   ! position constraint
+            del12 = delr12
+            del13 = delr13
+            del23 = delr23
+        elseif(iphas.eq.3)then   ! momentum constraint
+            del12 = delp12
+            del13 = delp13
+            del23 = delp23
+        else   ! no constraint
+            del12 = 0D0
+            del13 = 0D0
+            del23 = 0D0
+        end if
+!Lei20230214E-
 
-100	continue   ! for meson
+        if(del12.le.delc.and.del13.le.delc.and.del23.le.delc)then
+        isucc=1
+        else
+        isucc=0
+        endif
+        return
+
+100     continue   ! for meson
         ri1(1)=v(i1,1)
         ri1(2)=v(i1,2)
         ri1(3)=v(i1,3)
@@ -1766,14 +1791,26 @@ c	 proceed for baryon
         pi122=pi1(2)-pi2(2)
         pi123=pi1(3)-pi2(3)
         delp=sqrt(pi121*pi121+pi122*pi122+pi123*pi123)
-        delrp=delr*delp
-	if(delrp.le.delc)then
-	  isucc=1
-	else
-	  isucc=0
-	endif
-	return
-	end
+
+!Lei20230214B-
+        if(iphas.eq.1)then   ! complete phase space constraint
+            delrp = delr*delp
+        elseif(iphas.eq.2)then   ! position consttaint
+            delrp = delr
+        elseif(iphas.eq.3)then   ! momentum constraint
+            delrp = delp
+        else   ! no constraint
+            delrp = 0D0
+        end if
+!Lei20230214E-
+
+        if(delrp.le.delc)then
+        isucc=1
+        else
+        isucc=0
+        endif
+        return
+        end
 
 
 

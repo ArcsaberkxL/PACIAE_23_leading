@@ -1,4 +1,17 @@
 C*********************************************************************
+C* Modified for PACIAE 2.3                                          **
+C*   1. /PYJETS/ 4000 -> 80000;                                     **
+C*   2. MSTU(4)  4000 -> 80000, MSTU(5) 10000 -> ?0000 (need fix);  **
+C*   3. /HEPEVT/ 4000 -> 80000;                                     **
+C*   4. /PYCTAG/ 4000 -> 80000;                                     **
+C*   5. local /PYCBLS/ in PYMIHK and PYMIHG, 4000 -> 80000;         **
+C*   6. local MCN, ICR, MSCR, IOPT, RLOPTC in PYFSCR, 4000 -> 80000;**
+C*   7. About iikk, kkii and smadel stemming from PACIAE.           **
+c*                                                    By Ben-Hao Sa **
+c*                                Last updated by An-Ke on 14/02/23 **
+C*********************************************************************
+
+C*********************************************************************
 C*********************************************************************
 C*                                                                  **
 C*                                                 September 2013   **
@@ -362,7 +375,7 @@ C...Commonblocks.
  
 C...PYDAT1, containing status codes and most parameters.
       DATA MSTU/
-     &   0,    0,    0, 80000,10000,  500, 8000,    0,    0,    2,
+     &   0,    0,    0, 80000, 10000,  500, 8000,    0,    0,    2,   !FIXME(Lei20230214): MSTU(5) should be greater than MSTU(4).
      1   6,    0,    1,    0,    0,    1,    0,    0,    0,    0,
      2   2,   10,    0,    0,    1,   10,    0,    0,    0,    0,
      3   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
@@ -2692,7 +2705,7 @@ C...Commonblocks.
       COMMON/PYDAT2/KCHG(500,4),PMAS(500,4),PARF(2000),VCKM(4,4)
       SAVE /PYJETS/,/PYDAT1/,/PYDAT2/
 C...HEPEVT commonblock.
-      PARAMETER (NMXHEP=4000)
+      PARAMETER (NMXHEP=80000)   !Lei20230214 4000->80000
       COMMON/HEPEVT/NEVHEP,NHEP,ISTHEP(NMXHEP),IDHEP(NMXHEP),
      &JMOHEP(2,NMXHEP),JDAHEP(2,NMXHEP),PHEP(5,NMXHEP),VHEP(4,NMXHEP)
       DOUBLE PRECISION PHEP,VHEP
@@ -5650,7 +5663,7 @@ C...Identify incoming beam and target particles.
           CHTEMP=CHIDNT(I+1)(7:12)//' '
           DO 150 J=1,12
             IF(CHTEMP.EQ.CHCDE(J)) MINT(140+I)=KCDE(J)
-  150	  CONTINUE
+  150   CONTINUE
           PM(I)=PYMASS(MINT(140+I))
           VINT(302+I)=PM(I)
         ENDIF
@@ -10633,7 +10646,7 @@ C...Read out process
  
 C...Restore information for low-pT processes
       IF(ISUB.EQ.95.AND.MINT(57).GE.1) THEN
-!Lei20221017        DO 100 J=41,66
+c171022        DO 100 J=41,66   ! 171022 Lei
         DO J=41,66
   100   VINT(J)=VINTSV(J)
         ENDDO
@@ -17086,7 +17099,7 @@ C...PYTHIA commonblocks.
       COMMON/PYINT1/MINT(400),VINT(400)
       SAVE /PYJETS/,/PYPARS/,/PYINT1/
 C...HEPEVT commonblock.
-      PARAMETER (NMXHEP=4000)
+      PARAMETER (NMXHEP=80000)   !Lei20230214 4000->80000
       COMMON/HEPEVT/NEVHEP,NHEP,ISTHEP(NMXHEP),IDHEP(NMXHEP),
      &JMOHEP(2,NMXHEP),JDAHEP(2,NMXHEP),PHEP(5,NMXHEP),VHEP(4,NMXHEP)
       DOUBLE PRECISION PHEP,VHEP
@@ -17972,7 +17985,7 @@ C...3 -> 3 + n(1) -> 3 + 3bar
               MCT(ITRI(3),1)=NCT
               MCT(IANT(1),2)=NCT
             ELSEIF (KCQ(0).EQ.-1) THEN
-C...3bar -> 3bar + n(1) -> 3 + 3bar             
+C...3bar -> 3bar + n(1) -> 3 + 3bar
               K(ID,5)=K(ID,5)+IANT(2)
               K(IANT(2),1)=3
               K(IANT(2),5)=MSTU(5)*ID
@@ -21921,7 +21934,7 @@ C...The common block of dangling ends
      &     XMI(2,240),PT2MI(240),IMISEP(0:240)
       SAVE /PYJETS/,/PYDAT1/,/PYDAT2/,/PYPARS/,/PYINT1/,/PYINTM/
 C...Local variables
-      PARAMETER (NERSIZ=4000)
+      PARAMETER (NERSIZ=80000)   !Lei20230214 4000->80000
       COMMON /PYCBLS/MCO(NERSIZ,2),NCC,JCCO(NERSIZ,2),JCCN(NERSIZ,2)
      &     ,MACCPT
       COMMON /PYCTAG/NCT,MCT(80000,2)   ! 160722
@@ -23148,7 +23161,7 @@ C...Parameters
       COMMON/PYINT1/MINT(400),VINT(400)
       SAVE /PYJETS/,/PYINT1/
 C...Local variables
-      COMMON /PYCBLS/MCO(4000,2),NCC,JCCO(4000,2),JCCN(4000,2),MACCPT
+      COMMON /PYCBLS/MCO(80000,2),NCC,JCCO(80000,2),JCCN(80000,2),MACCPT   !Lei20230214 4000->80000
       COMMON /PYCTAG/NCT,MCT(80000,2)   ! 160722
       SAVE /PYCBLS/,/PYCTAG/
  
@@ -41006,7 +41019,7 @@ C...Commonblocks.
       COMMON/PYPARS/MSTP(200),PARP(200),MSTI(200),PARI(200)
       COMMON/PYINT1/MINT(400),VINT(400)
       SAVE /PYDAT1/,/PYDAT2/,/PYPARS/,/PYINT1/
-        common/sa24/adj1(40),nnstop,non24,zstop   ! 112819       
+        common/sa24/adj1(40),nnstop,non24,zstop   ! 112819
 C...Arrays and data.
       DIMENSION XPPR(-6:6),Q2MIN(16)
       DATA Q2MIN/ 2.56D0, 2.56D0, 2.56D0, 0.4D0, 0.4D0, 0.4D0,
@@ -42133,7 +42146,7 @@ C...Double precision declaration.
       PART2 = AF(0)*(1.D0 - X) + AF(3)*X
       PART3 = X*(1.D0-X)*(AF(5)+AF(6)*(1.D0-X)+AF(7)*X*(1.D0-X))
       PART4 = UT1VEC(IFL)*LOG(1.D0-X) +
-     &	      AF(2)*LOG(1.D0+EXP(UT2VEC(IFL))-X)
+     &        AF(2)*LOG(1.D0+EXP(UT2VEC(IFL))-X)
  
       PYCT5L = EXP(LOG(X) + PART1 + PART2 + PART3 + PART4)
  
@@ -42388,7 +42401,7 @@ C...Double precision declaration.
       PART2 = AF(0)*(1.D0 - X) + AF(3)*X
       PART3 = X*(1.D0-X)*(AF(5)+AF(6)*(1.D0-X)+AF(7)*X*(1.D0-X))
       PART4 = UT1VEC(IFL)*LOG(1.D0-X) +
-     &	      AF(2)*LOG(1.D0+EXP(UT2VEC(IFL))-X)
+     &        AF(2)*LOG(1.D0+EXP(UT2VEC(IFL))-X)
  
       PYCT5M = EXP(LOG(X) + PART1 + PART2 + PART3 + PART4)
  
@@ -46000,7 +46013,7 @@ C...Antisymmetrize couplings set by user
  
 C...Write spectrum to SLHA file
       IF (IMSS(23).NE.0) THEN
-	IFAIL=0
+        IFAIL=0
         CALL PYSLHA(3,0,IFAIL)
       ENDIF
  
@@ -46179,7 +46192,7 @@ C...Store width, cutoff and lifetime.
             PMAS(KC,4)=PARU(3)/PMAS(KC,2)*1D-12
           ENDIF
 C...Write decays to SLHA file
-	  IF (IMSS(24).NE.0) THEN
+          IF (IMSS(24).NE.0) THEN
             IFAIL=0
             CALL PYSLHA(4,KF,IFAIL)
           ENDIF
@@ -50262,27 +50275,27 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       DLAMBDAP2 = 0D0
       IF(MGLU.LT.MUR.OR.MGLU.LT.MQ) THEN
        IF(MQ.GT.MUR.AND.MGLU.GT.MUR) THEN
-	DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TQ**2-TGLU**2)
+        DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TQ**2-TGLU**2)
        ENDIF
  
        IF(MQ.GT.MUR.AND.MGLU.LT.MUR) THEN
-	DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TQ**2-TU**2)
+        DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TQ**2-TU**2)
        ENDIF
  
        IF(MQ.GT.MUR.AND.MGLU.EQ.MUR) THEN
-	DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TQ**2-TU**2)
+        DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TQ**2-TU**2)
        ENDIF
  
        IF(MUR.GT.MQ.AND.MGLU.GT.MQ) THEN
-	DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TU**2-TGLU**2)
+        DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TU**2-TGLU**2)
        ENDIF
  
        IF(MUR.GT.MQ.AND.MGLU.LT.MQ) THEN
-	DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TU**2-TQ**2)
+        DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TU**2-TQ**2)
        ENDIF
  
        IF(MUR.GT.MQ.AND.MGLU.EQ.MQ) THEN
-	DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TU**2-TQ**2)
+        DLAMBDAP2 = -4D0/(16D0*PI**2)**2*HU**4*(TU**2-TQ**2)
        ENDIF
       ENDIF
       DLAMBDA3 = 0D0
@@ -55512,7 +55525,7 @@ c...Eigenvalues: corrections to X1 and Z1 masses
       DMB2 = (A+B-SQRDEL)/2. 
       DMA2 = (A+B+SQRDEL)/2. 
       
-c...Rotation angles	
+c...Rotation angles
       SWW1 = 2*C
       CWW1 = A-B-SQRDEL
 C...Weinberg angle
@@ -56739,7 +56752,7 @@ C                VECTORS OF UPPER TRIANGULAR FORM ..........
 C
       DO 440 I = 1, N
 C
-!Lei20221017         DO 440 J = I, N
+c171022         DO 440 J = I, N   ! 171022 Lei
          DO J = I, N
             TR = DABS(HR(I,J)) + DABS(HI(I,J))
             IF (TR .GT. NORM) NORM = TR
@@ -56809,7 +56822,7 @@ C                FOR J=N STEP -1 UNTIL LOW DO -- ..........
          J = N + LOW - JJ
          M = MIN0(J,IGH)
 C
-!Lei20221017         DO 540 I = LOW, IGH
+c171022         DO 540 I = LOW, IGH   ! 171022 Lei
          DO I = LOW, IGH
             ZZR = 0.0D0
             ZZI = 0.0D0
@@ -57035,7 +57048,7 @@ C
          GOTO 100
   210 CONTINUE
 C     .......... NOW BALANCE THE SUBMATRIX IN ROWS K TO L ..........
-!Lei20221017      DO 220 I = K, L
+c171022      DO 220 I = K, L   ! 171022 Lei
       DO I = K, L
   220 SCALE(I) = 1.0D0
       END DO
@@ -57243,7 +57256,7 @@ C
          ORTI(M) = 0.0D0
          SCALE = 0.0D0
 C     .......... SCALE COLUMN (ALGOL TOL THEN NOT NEEDED) ..........
-!Lei20221017         DO 100 I = M, IGH
+c171022         DO 100 I = M, IGH   ! 171022 Lei
          DO I = M, IGH
   100    SCALE = SCALE + DABS(AR(I,M-1)) + DABS(AI(I,M-1))
          ENDDO
@@ -64971,11 +64984,11 @@ C...Commonblocks.
       COMMON/PYINT1/MINT(400),VINT(400)
       COMMON/PYINT4/MWID(500),WIDS(500,5)
         common/sa24/adj1(40),nnstop,non24,zstop   ! 050920
-        common/sa34/itorw,iikk,cp0,cr0,kkii   ! 112819 050920    
+        common/sa34/itorw,iikk,cp0,cr0,kkii   ! 112819 050920
       SAVE /PYJETS/,/PYDAT1/,/PYDAT2/,/PYDAT3/,/PYINT1/,/PYINT4/
 C...Local array.
       DIMENSION PS(2,6),IJOIN(100)
-        adj12=adj1(12)   ! 050920      
+        adj12=adj1(12)   ! 050920
  
 C...Initialize and reset.
       MSTU(24)=0
@@ -65132,10 +65145,10 @@ C...Check that momentum, energy and charge were conserved.
 c112819      IF(MCONS.EQ.1.AND.ABS(PS(2,6)-PS(1,6)).GT.0.1D0) CALL PYERRM(15,
 c112819     &'(PYEXEC:) charge was not conserved')
 c112819
-	IF(MCONS.EQ.1.AND.ABS(PS(2,6)-PS(1,6)).GT.0.1D0)then
-	CALL PYERRM(15,'(PYEXEC:) charge was not conserved')
-	iikk=2
-        endif
+      IF(MCONS.EQ.1.AND.ABS(PS(2,6)-PS(1,6)).GT.0.1D0)THEN
+        CALL PYERRM(15,'(PYEXEC:) charge was not conserved')
+        iikk=2
+      ENDIF
 c112819
  
       RETURN
@@ -70513,7 +70526,7 @@ C...Double precision and integer declarations.
       INTEGER PYK,PYCHGE,PYCOMP
 C...Commonblocks.
       COMMON/PYDAT1/MSTU(200),PARU(200),MSTJ(200),PARJ(200)
-	common/sa33/smadel,ecce,secce,parecc,iparres   ! 112819         
+        common/sa33/smadel,ecce,secce,parecc,iparres   ! 112819
       SAVE /PYDAT1/
  
 C...Generate p_T and azimuthal angle, gives p_x and p_y.
@@ -70528,9 +70541,9 @@ c       PX=PT*COS(PHI)
 c       PY=PT*SIN(PHI)
 c       randomly sample [px,py] on circle of ellipsoid with half major axis 
 c        of PT*(1+smadel) and half minor axis of PT*(1-smadel)
-        PX=PT*COS(PHI)*(1+smadel)   
-        PY=PT*SIN(PHI)*(1-smadel)   
-        PT=SQRT(PX*PX+PY*PY)   
+        PX=PT*COS(PHI)*(1+smadel)
+        PY=PT*SIN(PHI)*(1-smadel)
+        PT=SQRT(PX*PX+PY*PY)
 c112819 PT might deviate little bit from original Gaussian
  
       RETURN
@@ -75994,7 +76007,7 @@ C...Parameter statement to help give large particle numbers.
      &KEXCIT=4000000,KDIMEN=5000000)
  
 C...HEPEVT commonblock.
-      PARAMETER (NMXHEP=4000)
+      PARAMETER (NMXHEP=80000)   !Lei20230214 4000->80000
       COMMON/HEPEVT/NEVHEP,NHEP,ISTHEP(NMXHEP),IDHEP(NMXHEP),
      &JMOHEP(2,NMXHEP),JDAHEP(2,NMXHEP),PHEP(5,NMXHEP),VHEP(4,NMXHEP)
       DOUBLE PRECISION PHEP,VHEP
@@ -81401,7 +81414,7 @@ C...      = 1 : abort generation of current event and move to next.
       SUBROUTINE UPVETO(IVETO)
  
 C...HEPEVT commonblock.
-      PARAMETER (NMXHEP=4000)
+      PARAMETER (NMXHEP=80000)   !Lei20230214 4000->80000
       COMMON/HEPEVT/NEVHEP,NHEP,ISTHEP(NMXHEP),IDHEP(NMXHEP),
      &JMOHEP(2,NMXHEP),JDAHEP(2,NMXHEP),PHEP(5,NMXHEP),VHEP(4,NMXHEP)
       DOUBLE PRECISION PHEP,VHEP
@@ -81786,13 +81799,13 @@ C...Example 0: if you do not have suitable routines.
   100 CONTINUE
  
 C...Example 1: Fortran 90 routine.
-C      CALL DATE_AND_TIME(VALUES=IVAL)
-C      IDATI(1)=IVAL(1)
-C      IDATI(2)=IVAL(2)
-C      IDATI(3)=IVAL(3)
-C      IDATI(4)=IVAL(5)
-C      IDATI(5)=IVAL(6)
-C      IDATI(6)=IVAL(7)
+      CALL DATE_AND_TIME(VALUES=IVAL)   ! active on 060223
+      IDATI(1)=IVAL(1)
+      IDATI(2)=IVAL(2)
+      IDATI(3)=IVAL(3)
+      IDATI(4)=IVAL(5)
+      IDATI(5)=IVAL(6)
+      IDATI(6)=IVAL(7)
  
 C...Example 2: DEC Fortran 77. AIX.
 C      CALL IDATE(IMON,IDAY,IYEAR)
@@ -81821,14 +81834,14 @@ C      IDATI(5)=IMIN
 C      IDATI(6)=ISEC
  
 C...Example 4: GNU LINUX libU77, SunOS.
-        CALL IDATE(IDTEMP)   ! active on 112819
-        IDATI(1)=IDTEMP(3)   ! active on 112819
-        IDATI(2)=IDTEMP(2)   ! active on 112819
-        IDATI(3)=IDTEMP(1)   ! active on 112819
-        CALL ITIME(IDTEMP)   ! active on 112819
-        IDATI(4)=IDTEMP(1)   ! active on 112819
-        IDATI(5)=IDTEMP(2)   ! active on 112819   
-        IDATI(6)=IDTEMP(3)   ! active on 112819
+C      CALL IDATE(IDTEMP)
+C      IDATI(1)=IDTEMP(3)
+C      IDATI(2)=IDTEMP(2)
+C      IDATI(3)=IDTEMP(1)
+C      CALL ITIME(IDTEMP)
+C      IDATI(4)=IDTEMP(1)
+C      IDATI(5)=IDTEMP(2)
+C      IDATI(6)=IDTEMP(3)
  
 C...Common code to ensure right century.
       IDATI(1)=2000+MOD(IDATI(1),100)
